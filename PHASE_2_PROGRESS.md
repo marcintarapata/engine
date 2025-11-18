@@ -43,7 +43,7 @@ npm run types      # Generate .d.ts declaration files
 
 ### 2. Modernized Utility Modules
 
-**✅ `utilities/clamp.js`** - Modernized
+**✅ `utilities/clamp.js`** - Modernized (simple function)
 - Converted to arrow function with `const`
 - Removed `'use strict'` directive
 - Updated JSDoc with modern syntax
@@ -102,6 +102,38 @@ class Registry {
 module.exports = Registry;
 ```
 
+**✅ `utilities/KeyCodes.js`** - Modernized (constant object)
+- Converted to `const` declaration
+- Removed `'use strict'`
+- Updated JSDoc
+- Added trailing comma for better diffs
+
+**✅ `utilities/CallbackStore.js`** - Modernized (ES6 class)
+- Converted from prototype to ES6 class
+- Arrow function for destroy callback
+- Modern loop syntax (`for...of` pattern)
+- Improved JSDoc with proper types
+
+**✅ `math/Vec2.js`** - Modernized (ES6 class with static methods)
+- Converted large prototype-based class to ES6
+- Both instance and static methods
+- Replaced `var` with `const`/`let` throughout
+- Simplified `isZero()` logic
+- Modern JSDoc with proper types
+
+**Example** - Vec2 demonstrates both instance and static patterns:
+```javascript
+class Vec2 {
+  constructor(x, y) { /* ... */ }
+
+  // Instance methods
+  add(v) { /* ... */ return this; }
+
+  // Static methods
+  static normalize(v, output) { /* ... */ return output; }
+}
+```
+
 ---
 
 ## 🚧 In Progress
@@ -120,17 +152,23 @@ We're following this pattern for each module:
 ### Modules Identified for Modernization
 
 **Utilities** (12 files):
-- ✅ clamp.js
-- ✅ Registry.js
-- ⏳ CallbackStore.js
+- ✅ clamp.js (arrow function)
+- ✅ Registry.js (ES6 class)
+- ✅ CallbackStore.js (ES6 class)
+- ✅ KeyCodes.js (const object)
 - ⏳ Color.js
-- ⏳ KeyCodes.js
 - ⏳ ObjectManager.js
 - ⏳ clone.js
 - ⏳ keyValueToArrays.js
 - ⏳ loadURL.js
 - ⏳ strip.js
 - ⏳ vendorPrefix.js
+
+**Math** (~4 files):
+- ✅ Vec2.js (ES6 class with static methods)
+- ⏳ Vec3.js
+- ⏳ Mat33.js
+- ⏳ Quaternion.js
 
 **Core** (15 files):
 - ⏳ Channel.js
@@ -147,14 +185,6 @@ We're following this pattern for each module:
 - ⏳ SizeSystem.js
 - ⏳ Transform.js
 - ⏳ TransformSystem.js
-
-**Math** (~10 files):
-- ⏳ Vec2.js
-- ⏳ Vec3.js
-- ⏳ Vec4.js
-- ⏳ Quaternion.js
-- ⏳ Mat4.js
-- ⏳ etc.
 
 **Components** (~5 files)
 **Physics** (~20+ files)
@@ -258,20 +288,25 @@ After each module is modernized:
 
 ## 📊 Progress Tracking
 
-**Overall Progress**: ~5% complete
+**Overall Progress**: ~8% complete
 
 | Category | Total | Modernized | Progress |
 |----------|-------|------------|----------|
-| Utilities | 12 | 2 | 17% |
+| Utilities | 12 | 4 | 33% ✅ |
+| Math | 4 | 1 | 25% 🔄 |
 | Core | 15 | 0 | 0% |
-| Math | 10 | 0 | 0% |
 | Components | 5 | 0 | 0% |
 | Physics | 20+ | 0 | 0% |
 | WebGL | 30+ | 0 | 0% |
 
 **Total Files**: ~100+
-**Modernized**: 2
-**Remaining**: ~98+
+**Modernized**: 5
+**Remaining**: ~95+
+
+**Recent Updates**:
+- ✅ Completed: KeyCodes.js (const object)
+- ✅ Completed: CallbackStore.js (ES6 class)
+- ✅ Completed: Vec2.js (ES6 class with static methods)
 
 ---
 
