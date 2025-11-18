@@ -22,20 +22,17 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
-var Commands = require('../core/Commands');
+const Commands = require('../core/Commands');
 
 /**
  * Camera is a component that is responsible for sending information to the renderer about where
- * the camera is in the scene.  This allows the user to set the type of projection, the focal depth,
+ * the camera is in the scene. This allows the user to set the type of projection, the focal depth,
  * and other properties to adjust the way the scenes are rendered.
  *
- * @class Camera
- *
- * @param {Node} node to which the instance of Camera will be a component of
+ * @param {*} node - Node to which the instance of Camera will be a component of
  */
-function Camera(node) {
+class Camera {
+  constructor(node) {
     this._node = node;
     this._projectionType = Camera.ORTHOGRAPHIC_PROJECTION;
     this._focalDepth = 0;
@@ -47,91 +44,76 @@ function Camera(node) {
     this._viewDirty = false;
     this._perspectiveDirty = false;
     this.setFlat();
-}
+  }
 
-Camera.FRUSTUM_PROJECTION = 0;
-Camera.PINHOLE_PROJECTION = 1;
-Camera.ORTHOGRAPHIC_PROJECTION = 2;
-
-/**
- * @method
- *
- * @return {String} Name of the component
- */
-Camera.prototype.toString = function toString() {
+  /**
+   * Returns the name of the component.
+   *
+   * @returns {string} Name of the component
+   */
+  toString() {
     return 'Camera';
-};
+  }
 
-/**
- * Gets object containing serialized data for the component
- *
- * @method
- *
- * @return {Object} the state of the component
- */
-Camera.prototype.getValue = function getValue() {
+  /**
+   * Gets object containing serialized data for the component.
+   *
+   * @returns {Object} The state of the component
+   */
+  getValue() {
     return {
-        component: this.toString(),
-        projectionType: this._projectionType,
-        focalDepth: this._focalDepth,
-        near: this._near,
-        far: this._far
+      component: this.toString(),
+      projectionType: this._projectionType,
+      focalDepth: this._focalDepth,
+      near: this._near,
+      far: this._far,
     };
-};
+  }
 
-/**
- * Set the components state based on some serialized data
- *
- * @method
- *
- * @param {Object} state an object defining what the state of the component should be
- *
- * @return {Boolean} status of the set
- */
-Camera.prototype.setValue = function setValue(state) {
+  /**
+   * Set the components state based on some serialized data.
+   *
+   * @param {Object} state - An object defining what the state of the component should be
+   * @returns {boolean} Status of the set
+   */
+  setValue(state) {
     if (this.toString() === state.component) {
-        this.set(state.projectionType, state.focalDepth, state.near, state.far);
-        return true;
+      this.set(state.projectionType, state.focalDepth, state.near, state.far);
+      return true;
     }
     return false;
-};
+  }
 
-/**
- * Set the internals of the component
- *
- * @method
- *
- * @param {Number} type an id corresponding to the type of projection to use
- * @param {Number} depth the depth for the pinhole projection model
- * @param {Number} near the distance of the near clipping plane for a frustum projection
- * @param {Number} far the distance of the far clipping plane for a frustum projection
- *
- * @return {Boolean} status of the set
- */
-Camera.prototype.set = function set(type, depth, near, far) {
+  /**
+   * Set the internals of the component.
+   *
+   * @param {number} type - An id corresponding to the type of projection to use
+   * @param {number} depth - The depth for the pinhole projection model
+   * @param {number} near - The distance of the near clipping plane for a frustum projection
+   * @param {number} far - The distance of the far clipping plane for a frustum projection
+   * @returns {void}
+   */
+  set(type, depth, near, far) {
     if (!this._requestingUpdate) {
-        this._node.requestUpdate(this._id);
-        this._requestingUpdate = true;
+      this._node.requestUpdate(this._id);
+      this._requestingUpdate = true;
     }
     this._projectionType = type;
     this._focalDepth = depth;
     this._near = near;
     this._far = far;
-};
+  }
 
-/**
- * Set the camera depth for a pinhole projection model
- *
- * @method
- *
- * @param {Number} depth the distance between the Camera and the origin
- *
- * @return {Camera} this
- */
-Camera.prototype.setDepth = function setDepth(depth) {
+  /**
+   * Set the camera depth for a pinhole projection model.
+   *
+   * @param {number} depth - The distance between the Camera and the origin
+   * @returns {Camera} This instance for chaining
+   */
+  setDepth(depth) {
     if (!this._requestingUpdate) {
-        this._node.requestUpdate(this._id);
-        this._requestingUpdate = true;
+      this._node.requestUpdate(this._id);
+      this._requestingUpdate = true;
     }
     this._perspectiveDirty = true;
     this._projectionType = Camera.PINHOLE_PROJECTION;
@@ -140,22 +122,19 @@ Camera.prototype.setDepth = function setDepth(depth) {
     this._far = 0;
 
     return this;
-};
+  }
 
-/**
- * Gets object containing serialized data for the component
- *
- * @method
- *
- * @param {Number} near distance from the near clipping plane to the camera
- * @param {Number} far distance from the far clipping plane to the camera
- *
- * @return {Camera} this
- */
-Camera.prototype.setFrustum = function setFrustum(near, far) {
+  /**
+   * Set the camera to use frustum projection.
+   *
+   * @param {number} near - Distance from the near clipping plane to the camera
+   * @param {number} far - Distance from the far clipping plane to the camera
+   * @returns {Camera} This instance for chaining
+   */
+  setFrustum(near, far) {
     if (!this._requestingUpdate) {
-        this._node.requestUpdate(this._id);
-        this._requestingUpdate = true;
+      this._node.requestUpdate(this._id);
+      this._requestingUpdate = true;
     }
 
     this._perspectiveDirty = true;
@@ -165,19 +144,17 @@ Camera.prototype.setFrustum = function setFrustum(near, far) {
     this._far = far;
 
     return this;
-};
+  }
 
-/**
- * Set the Camera to have orthographic projection
- *
- * @method
- *
- * @return {Camera} this
- */
-Camera.prototype.setFlat = function setFlat() {
+  /**
+   * Set the Camera to have orthographic projection.
+   *
+   * @returns {Camera} This instance for chaining
+   */
+  setFlat() {
     if (!this._requestingUpdate) {
-        this._node.requestUpdate(this._id);
-        this._requestingUpdate = true;
+      this._node.requestUpdate(this._id);
+      this._requestingUpdate = true;
     }
 
     this._perspectiveDirty = true;
@@ -187,110 +164,113 @@ Camera.prototype.setFlat = function setFlat() {
     this._far = 0;
 
     return this;
-};
+  }
 
-/**
- * When the node this component is attached to updates, the Camera will
- * send new camera information to the Compositor to update the rendering
- * of the scene.
- *
- * @method
- *
- * @return {undefined} undefined
- */
-Camera.prototype.onUpdate = function onUpdate() {
+  /**
+   * When the node this component is attached to updates, the Camera will
+   * send new camera information to the Compositor to update the rendering
+   * of the scene.
+   *
+   * @returns {void}
+   */
+  onUpdate() {
     this._requestingUpdate = false;
 
-    var path = this._node.getLocation();
+    const path = this._node.getLocation();
 
-    this._node
-        .sendDrawCommand(Commands.WITH)
-        .sendDrawCommand(path);
+    this._node.sendDrawCommand(Commands.WITH).sendDrawCommand(path);
 
     if (this._perspectiveDirty) {
-        this._perspectiveDirty = false;
+      this._perspectiveDirty = false;
 
-        switch (this._projectionType) {
-            case Camera.FRUSTUM_PROJECTION:
-                this._node.sendDrawCommand(Commands.FRUSTRUM_PROJECTION);
-                this._node.sendDrawCommand(this._near);
-                this._node.sendDrawCommand(this._far);
-                break;
-            case Camera.PINHOLE_PROJECTION:
-                this._node.sendDrawCommand(Commands.PINHOLE_PROJECTION);
-                this._node.sendDrawCommand(this._focalDepth);
-                break;
-            case Camera.ORTHOGRAPHIC_PROJECTION:
-                this._node.sendDrawCommand(Commands.ORTHOGRAPHIC_PROJECTION);
-                break;
-        }
+      switch (this._projectionType) {
+        case Camera.FRUSTUM_PROJECTION:
+          this._node.sendDrawCommand(Commands.FRUSTRUM_PROJECTION);
+          this._node.sendDrawCommand(this._near);
+          this._node.sendDrawCommand(this._far);
+          break;
+        case Camera.PINHOLE_PROJECTION:
+          this._node.sendDrawCommand(Commands.PINHOLE_PROJECTION);
+          this._node.sendDrawCommand(this._focalDepth);
+          break;
+        case Camera.ORTHOGRAPHIC_PROJECTION:
+          this._node.sendDrawCommand(Commands.ORTHOGRAPHIC_PROJECTION);
+          break;
+      }
     }
 
     if (this._viewDirty) {
-        this._viewDirty = false;
+      this._viewDirty = false;
 
-        this._node.sendDrawCommand(Commands.CHANGE_VIEW_TRANSFORM);
-        this._node.sendDrawCommand(this._viewTransform[0]);
-        this._node.sendDrawCommand(this._viewTransform[1]);
-        this._node.sendDrawCommand(this._viewTransform[2]);
-        this._node.sendDrawCommand(this._viewTransform[3]);
+      this._node.sendDrawCommand(Commands.CHANGE_VIEW_TRANSFORM);
+      this._node.sendDrawCommand(this._viewTransform[0]);
+      this._node.sendDrawCommand(this._viewTransform[1]);
+      this._node.sendDrawCommand(this._viewTransform[2]);
+      this._node.sendDrawCommand(this._viewTransform[3]);
 
-        this._node.sendDrawCommand(this._viewTransform[4]);
-        this._node.sendDrawCommand(this._viewTransform[5]);
-        this._node.sendDrawCommand(this._viewTransform[6]);
-        this._node.sendDrawCommand(this._viewTransform[7]);
+      this._node.sendDrawCommand(this._viewTransform[4]);
+      this._node.sendDrawCommand(this._viewTransform[5]);
+      this._node.sendDrawCommand(this._viewTransform[6]);
+      this._node.sendDrawCommand(this._viewTransform[7]);
 
-        this._node.sendDrawCommand(this._viewTransform[8]);
-        this._node.sendDrawCommand(this._viewTransform[9]);
-        this._node.sendDrawCommand(this._viewTransform[10]);
-        this._node.sendDrawCommand(this._viewTransform[11]);
+      this._node.sendDrawCommand(this._viewTransform[8]);
+      this._node.sendDrawCommand(this._viewTransform[9]);
+      this._node.sendDrawCommand(this._viewTransform[10]);
+      this._node.sendDrawCommand(this._viewTransform[11]);
 
-        this._node.sendDrawCommand(this._viewTransform[12]);
-        this._node.sendDrawCommand(this._viewTransform[13]);
-        this._node.sendDrawCommand(this._viewTransform[14]);
-        this._node.sendDrawCommand(this._viewTransform[15]);
+      this._node.sendDrawCommand(this._viewTransform[12]);
+      this._node.sendDrawCommand(this._viewTransform[13]);
+      this._node.sendDrawCommand(this._viewTransform[14]);
+      this._node.sendDrawCommand(this._viewTransform[15]);
     }
-};
+  }
 
-/**
- * When the transform of the node this component is attached to
- * changes, have the Camera update its projection matrix and
- * if needed, flag to node to update.
- *
- * @method
- *
- * @param {Array} transform an array denoting the transform matrix of the node
- *
- * @return {Camera} this
- */
-Camera.prototype.onTransformChange = function onTransformChange(transform) {
-    var a = transform;
+  /**
+   * When the transform of the node this component is attached to
+   * changes, have the Camera update its projection matrix and
+   * if needed, flag the node to update.
+   *
+   * @param {Array} transform - An array denoting the transform matrix of the node
+   * @returns {void}
+   */
+  onTransformChange(transform) {
+    const a = transform;
     this._viewDirty = true;
 
     if (!this._requestingUpdate) {
-        this._node.requestUpdate(this._id);
-        this._requestingUpdate = true;
+      this._node.requestUpdate(this._id);
+      this._requestingUpdate = true;
     }
 
-    var a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
-    a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
-    a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11],
-    a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15],
-
-    b00 = a00 * a11 - a01 * a10,
-    b01 = a00 * a12 - a02 * a10,
-    b02 = a00 * a13 - a03 * a10,
-    b03 = a01 * a12 - a02 * a11,
-    b04 = a01 * a13 - a03 * a11,
-    b05 = a02 * a13 - a03 * a12,
-    b06 = a20 * a31 - a21 * a30,
-    b07 = a20 * a32 - a22 * a30,
-    b08 = a20 * a33 - a23 * a30,
-    b09 = a21 * a32 - a22 * a31,
-    b10 = a21 * a33 - a23 * a31,
-    b11 = a22 * a33 - a23 * a32,
-
-    det = 1/(b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06);
+    const a00 = a[0],
+      a01 = a[1],
+      a02 = a[2],
+      a03 = a[3],
+      a10 = a[4],
+      a11 = a[5],
+      a12 = a[6],
+      a13 = a[7],
+      a20 = a[8],
+      a21 = a[9],
+      a22 = a[10],
+      a23 = a[11],
+      a30 = a[12],
+      a31 = a[13],
+      a32 = a[14],
+      a33 = a[15],
+      b00 = a00 * a11 - a01 * a10,
+      b01 = a00 * a12 - a02 * a10,
+      b02 = a00 * a13 - a03 * a10,
+      b03 = a01 * a12 - a02 * a11,
+      b04 = a01 * a13 - a03 * a11,
+      b05 = a02 * a13 - a03 * a12,
+      b06 = a20 * a31 - a21 * a30,
+      b07 = a20 * a32 - a22 * a30,
+      b08 = a20 * a33 - a23 * a30,
+      b09 = a21 * a32 - a22 * a31,
+      b10 = a21 * a33 - a23 * a31,
+      b11 = a22 * a33 - a23 * a32,
+      det = 1 / (b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06);
 
     this._viewTransform[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
     this._viewTransform[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
@@ -308,6 +288,11 @@ Camera.prototype.onTransformChange = function onTransformChange(transform) {
     this._viewTransform[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
     this._viewTransform[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
     this._viewTransform[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
-};
+  }
+}
+
+Camera.FRUSTUM_PROJECTION = 0;
+Camera.PINHOLE_PROJECTION = 1;
+Camera.ORTHOGRAPHIC_PROJECTION = 2;
 
 module.exports = Camera;

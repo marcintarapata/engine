@@ -22,55 +22,46 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
-var Position = require('./Position');
+const Position = require('./Position');
 
 /**
  * MountPoint is a component designed to allow for smooth tweening
  * of where on the Node it is attached to the parent.
  *
- * @class MountPoint
- * @augments Position
- *
-* @param {Node} node Node that the MountPoint component will be attached to
+ * @extends Position
+ * @param {*} node - Node that the MountPoint component will be attached to
  */
-function MountPoint(node) {
-    Position.call(this, node);
+class MountPoint extends Position {
+  constructor(node) {
+    super(node);
 
-    var initial = node.getMountPoint();
+    const initial = node.getMountPoint();
 
     this._x.set(initial[0]);
     this._y.set(initial[1]);
     this._z.set(initial[2]);
-}
+  }
 
-/**
- * Return the name of the MountPoint component
- *
- * @method
- *
- * @return {String} Name of the component
- */
-MountPoint.prototype.toString = function toString() {
+  /**
+   * Return the name of the MountPoint component.
+   *
+   * @returns {string} Name of the component
+   */
+  toString() {
     return 'MountPoint';
-};
+  }
 
-MountPoint.prototype = Object.create(Position.prototype);
-MountPoint.prototype.constructor = MountPoint;
-
-/**
- * When the node this component is attached to updates, update the value
- * of the Node's mount point.
- *
- * @method
- *
- * @return {undefined} undefined
- */
-MountPoint.prototype.update = function update() {
+  /**
+   * When the node this component is attached to updates, update the value
+   * of the Node's mount point.
+   *
+   * @returns {void}
+   */
+  update() {
     this._node.setMountPoint(this._x.get(), this._y.get(), this._z.get());
     this._checkUpdate();
-};
+  }
+}
 
 MountPoint.prototype.onUpdate = MountPoint.prototype.update;
 
