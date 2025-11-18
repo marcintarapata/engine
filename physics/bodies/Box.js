@@ -22,43 +22,40 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+const Vec3 = require('../../math/Vec3');
+const convexBodyFactory = require('./convexBodyFactory');
 
-var Vec3 = require('../../math/Vec3');
-var convexBodyFactory = require('./convexBodyFactory');
-
-var _Box = convexBodyFactory([
-            // Order: back-left, back-right, front-left, front-right
-            // Top half
-            new Vec3(-100, -100, -100),
-            new Vec3(100, -100, -100),
-            new Vec3(-100, -100, 100),
-            new Vec3(100, -100, 100),
-            // Bottom half
-            new Vec3(-100, 100, -100),
-            new Vec3(100, 100, -100),
-            new Vec3(-100, 100, 100),
-            new Vec3(100, 100, 100)
-        ]);
+const _Box = convexBodyFactory([
+  // Order: back-left, back-right, front-left, front-right
+  // Top half
+  new Vec3(-100, -100, -100),
+  new Vec3(100, -100, -100),
+  new Vec3(-100, -100, 100),
+  new Vec3(100, -100, 100),
+  // Bottom half
+  new Vec3(-100, 100, -100),
+  new Vec3(100, 100, -100),
+  new Vec3(-100, 100, 100),
+  new Vec3(100, 100, 100)
+]);
 
 /**
  * @class Box
  * @extends Particle
- * @param {Object} options Initial state of the body.
+ * @param {Object} options - Initial state of the body.
  */
-function Box(options) {
-    _Box.call(this, options);
+class Box extends _Box {
+  constructor(options) {
+    super(options);
     this.normals = [
-        // Order: top, right, front
-        new Vec3(0, 1, 0),
-        new Vec3(1, 0, 0),
-        new Vec3(0, 0, 1)
+      // Order: top, right, front
+      new Vec3(0, 1, 0),
+      new Vec3(1, 0, 0),
+      new Vec3(0, 0, 1)
     ];
 
     this.type = 1 << 1;
+  }
 }
-
-Box.prototype = Object.create(_Box.prototype);
-Box.prototype.constructor = Box;
 
 module.exports = Box;

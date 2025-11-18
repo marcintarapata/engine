@@ -22,73 +22,68 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+const Force = require('./Force');
+const Vec3 = require('../../math/Vec3');
 
-var Force = require('./Force');
-var Vec3 = require('../../math/Vec3');
-
-var FORCE_REGISTER = new Vec3();
+const FORCE_REGISTER = new Vec3();
 
 /**
  * An inverse square force dependent on the masses of the source and targets.
  *
  * @class Gravity3D
  * @extends Force
- * @param {Particle} source The optional source of the attraction field.
- * @param {Particle[]} targets The targets to affect.
- * @param {Object} options The options hash.
+ * @param {Particle} source - The optional source of the attraction field.
+ * @param {Particle[]} targets - The targets to affect.
+ * @param {Object} options - The options hash.
  */
-function Gravity3D(source, targets, options) {
+class Gravity3D extends Force {
+  constructor(source, targets, options) {
+    super(targets, options);
     this.source = source || null;
-    Force.call(this, targets, options);
-}
+  }
 
-Gravity3D.prototype = Object.create(Force.prototype);
-Gravity3D.prototype.constructor = Gravity3D;
-
-/**
- * Initialize the Force. Sets defaults if a property was not already set.
- *
- * @method
- * @return {undefined} undefined
- */
-Gravity3D.prototype.init = function() {
+  /**
+   * Initialize the Force. Sets defaults if a property was not already set.
+   *
+   * @method init
+   * @returns {void}
+   */
+  init() {
     this.max = this.max || Infinity;
     this.strength = this.strength || 200;
-};
+  }
 
-/**
- * Apply the force.
- *
- * @method
- * @return {undefined} undefined
- */
-Gravity3D.prototype.update = function() {
-    var source = this.source;
-    var targets = this.targets;
+  /**
+   * Apply the force.
+   *
+   * @method update
+   * @returns {void}
+   */
+  update() {
+    const source = this.source;
+    const targets = this.targets;
+    const force = FORCE_REGISTER;
+    const strength = this.strength;
+    const max = this.max;
+    const anchor = this.anchor || source.position;
+    const sourceMass = this.anchor ? 1 : source.mass;
 
-    var force = FORCE_REGISTER;
-
-    var strength = this.strength;
-    var max = this.max;
-    var anchor = this.anchor || source.position;
-    var sourceMass = this.anchor ? 1 : source.mass;
-    for (var i = 0, len = targets.length; i < len; i++) {
-        var target = targets[i];
-        Vec3.subtract(anchor, target.position, force);
-        var dist = force.length();
-        var invDistance = dist ? 1 / dist : 0;
-        var magnitude = strength * sourceMass * target.mass * invDistance * invDistance;
-        if (magnitude < 0) {
-            magnitude = magnitude < -max ? -max : magnitude;
-        }
-        else {
-            magnitude = magnitude > max ? max : magnitude;
-        }
-        force.scale(magnitude * invDistance);
-        target.applyForce(force);
-        if (source) source.applyForce(force.invert());
+    for (let i = 0, len = targets.length; i < len; i++) {
+      const target = targets[i];
+      Vec3.subtract(anchor, target.position, force);
+      const dist = force.length();
+      const invDistance = dist ? 1 / dist : 0;
+      let magnitude = strength * sourceMass * target.mass * invDistance * invDistance;
+      if (magnitude < 0) {
+        magnitude = magnitude < -max ? -max : magnitude;
+      } else {
+        magnitude = magnitude > max ? max : magnitude;
+      }
+      force.scale(magnitude * invDistance);
+      target.applyForce(force);
+      if (source) source.applyForce(force.invert());
     }
-};
+  }
+}
 
 module.exports = Gravity3D;

@@ -22,86 +22,78 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+const Force = require('./Force');
+const Vec3 = require('../../math/Vec3');
 
-var Force = require('./Force');
-var Vec3 = require('../../math/Vec3');
-
-var FORCE_REGISTER = new Vec3();
+const FORCE_REGISTER = new Vec3();
 
 /**
  * Use drag to oppose momentum of a moving object
  *
  * @class Drag
  * @extends Force
- * @param {Particle[]} targets The targets to affect.
- * @param {Object} options The options hash.
+ * @param {Particle[]} targets - The targets to affect.
+ * @param {Object} options - The options hash.
  */
-function Drag(targets, options) {
-    Force.call(this, targets, options);
-}
+class Drag extends Force {
+  constructor(targets, options) {
+    super(targets, options);
+  }
 
-Drag.prototype = Object.create(Force.prototype);
-Drag.prototype.constructor = Drag;
+  /**
+   * Initialize the Force. Sets defaults if a property was not already set.
+   *
+   * @method init
+   * @param {Object} options - The options hash.
+   * @returns {void}
+   */
+  init() {
+    this.max = this.max || Infinity;
+    this.strength = this.strength || 1;
+    this.type = this.type || Drag.LINEAR;
+  }
+
+  /**
+   * Apply the force.
+   *
+   * @method update
+   * @returns {void}
+   */
+  update() {
+    const targets = this.targets;
+    const type = this.type;
+    const force = FORCE_REGISTER;
+    const max = this.max;
+    const strength = this.strength;
+
+    for (let i = 0, len = targets.length; i < len; i++) {
+      const target = targets[i];
+      const velocity = target.velocity;
+      const v = velocity.length();
+      const invV = v ? 1 / v : 0;
+      const magnitude = -strength * type(v);
+      Vec3.scale(velocity, (magnitude < -max ? -max : magnitude) * invV, force);
+      target.applyForce(force);
+    }
+  }
+}
 
 /**
  * Used to scale velocity in the computation of the drag force.
  *
  * @property {Function} QUADRATIC
- * @param {Number} v The speed.
- * @return {Number} The scale by which to multiply.
+ * @param {number} v - The speed.
+ * @returns {number} The scale by which to multiply.
  */
-Drag.QUADRATIC = function QUADRATIC(v) {
-    return v*v;
-};
+Drag.QUADRATIC = (v) => v * v;
 
 /**
  * Used to scale velocity in the computation of the drag force.
  *
  * @property {Function} LINEAR
- * @param {Number} v The speed.
- * @return {Number} The scale by which to multiply.
+ * @param {number} v - The speed.
+ * @returns {number} The scale by which to multiply.
  */
-Drag.LINEAR = function LINEAR(v) {
-    return v;
-};
-
-/**
- * Initialize the Force. Sets defaults if a property was not already set.
- *
- * @method
- * @param {Object} options The options hash.
- * @return {undefined} undefined
- */
-Drag.prototype.init = function() {
-    this.max = this.max || Infinity;
-    this.strength = this.strength || 1;
-    this.type = this.type || Drag.LINEAR;
-};
-
-/**
- * Apply the force.
- *
- * @method
- * @return {undefined} undefined
- */
-Drag.prototype.update = function update() {
-    var targets = this.targets;
-    var type = this.type;
-
-    var force = FORCE_REGISTER;
-
-    var max = this.max;
-    var strength = this.strength;
-    for (var i = 0, len = targets.length; i < len; i++) {
-        var target = targets[i];
-        var velocity = target.velocity;
-        var v = velocity.length();
-        var invV = v ? 1 / v : 0;
-        var magnitude = -strength * type(v);
-        Vec3.scale(velocity, (magnitude < -max ? -max : magnitude) * invV, force);
-        target.applyForce(force);
-    }
-};
+Drag.LINEAR = (v) => v;
 
 module.exports = Drag;
