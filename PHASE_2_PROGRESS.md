@@ -171,11 +171,11 @@ We're following this pattern for each module:
 - ✅ Quaternion.js (ES6 class with static methods)
 
 **Core** (15 files):
-- ⏳ Channel.js
+- ✅ Channel.js (ES6 class)
 - ✅ Clock.js (ES6 class)
 - ✅ Commands.js (arrow functions)
-- ⏳ Dispatch.js
-- ⏳ Event.js
+- ✅ Dispatch.js (ES6 class, singleton)
+- ✅ Event.js (ES6 class)
 - ⏳ FamousEngine.js
 - ⏳ Node.js (complex, ~1000 lines)
 - ✅ Path.js (namespace object)
@@ -288,27 +288,27 @@ After each module is modernized:
 
 ## 📊 Progress Tracking
 
-**Overall Progress**: ~22% complete
+**Overall Progress**: ~25% complete
 
 | Category | Total | Modernized | Progress |
 |----------|-------|------------|----------|
 | Utilities | 12 | 12 | 100% ✅✅✅ |
 | Math | 4 | 4 | 100% ✅✅✅ |
-| Core | 15 | 3 | 20% 🔄 |
+| Core | 15 | 6 | 40% 🔄 |
 | Components | 5 | 0 | 0% |
 | Physics | 20+ | 0 | 0% |
 | WebGL | 30+ | 0 | 0% |
 
 **Total Files**: ~100+
-**Modernized**: 19
-**Remaining**: ~81+
+**Modernized**: 22
+**Remaining**: ~78+
 
 **Recent Updates**:
 - ✅ Completed: All utilities (12/12) - 100% complete
 - ✅ Completed: All math modules (4/4) - 100% complete
-- ✅ Completed: Clock.js (ES6 class with rest parameters)
-- ✅ Completed: Path.js (namespace object with modern methods)
-- ✅ Completed: Commands.js (arrow functions, const/let)
+- ✅ Completed: Channel.js, Event.js (ES6 classes)
+- ✅ Completed: Dispatch.js (large ES6 class, 400+ lines, singleton export)
+- ✅ Completed: 6/15 core modules (40%)
 
 ---
 
@@ -333,6 +333,6 @@ After each module is modernized:
 ---
 
 **Last Updated**: 2025-11-18
-**Next Review**: Continue with remaining Core modules (12 remaining)
+**Next Review**: Continue with remaining Core modules (9 remaining)
 
-**Build Status**: ✅ Passing (264ms, no errors)
+**Build Status**: ✅ Passing (274ms, no errors)
