@@ -22,183 +22,164 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
-var sin = Math.sin;
-var cos = Math.cos;
-var asin = Math.asin;
-var acos = Math.acos;
-var atan2 = Math.atan2;
-var sqrt = Math.sqrt;
+const sin = Math.sin;
+const cos = Math.cos;
+const asin = Math.asin;
+const acos = Math.acos;
+const atan2 = Math.atan2;
+const sqrt = Math.sqrt;
 
 /**
  * A vector-like object used to represent rotations. If theta is the angle of
  * rotation, and (x', y', z') is a normalized vector representing the axis of
  * rotation, then w = cos(theta/2), x = sin(theta/2)*x', y = sin(theta/2)*y',
  * and z = sin(theta/2)*z'.
- *
- * @class Quaternion
- *
- * @param {Number} w The w component.
- * @param {Number} x The x component.
- * @param {Number} y The y component.
- * @param {Number} z The z component.
  */
-function Quaternion(w, x, y, z) {
+class Quaternion {
+  /**
+   * @param {number} [w] - The w component
+   * @param {number} [x] - The x component
+   * @param {number} [y] - The y component
+   * @param {number} [z] - The z component
+   */
+  constructor(w, x, y, z) {
     this.w = w || 1;
     this.x = x || 0;
     this.y = y || 0;
     this.z = z || 0;
-}
+  }
 
-/**
- * Multiply the current Quaternion by input Quaternion q.
- * Left-handed multiplication.
- *
- * @method
- *
- * @param {Quaternion} q The Quaternion to multiply by on the right.
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.multiply = function multiply(q) {
-    var x1 = this.x;
-    var y1 = this.y;
-    var z1 = this.z;
-    var w1 = this.w;
-    var x2 = q.x;
-    var y2 = q.y;
-    var z2 = q.z;
-    var w2 = q.w || 0;
+  /**
+   * Multiply the current Quaternion by input Quaternion q.
+   * Left-handed multiplication.
+   *
+   * @param {Quaternion} q - The Quaternion to multiply by on the right
+   * @returns {Quaternion} this instance for chaining
+   */
+  multiply(q) {
+    const x1 = this.x;
+    const y1 = this.y;
+    const z1 = this.z;
+    const w1 = this.w;
+    const x2 = q.x;
+    const y2 = q.y;
+    const z2 = q.z;
+    const w2 = q.w || 0;
 
     this.w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
     this.x = x1 * w2 + x2 * w1 + y2 * z1 - y1 * z2;
     this.y = y1 * w2 + y2 * w1 + x1 * z2 - x2 * z1;
     this.z = z1 * w2 + z2 * w1 + x2 * y1 - x1 * y2;
     return this;
-};
+  }
 
-/**
- * Multiply the current Quaternion by input Quaternion q on the left, i.e. q * this.
- * Left-handed multiplication.
- *
- * @method
- *
- * @param {Quaternion} q The Quaternion to multiply by on the left.
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.leftMultiply = function leftMultiply(q) {
-    var x1 = q.x;
-    var y1 = q.y;
-    var z1 = q.z;
-    var w1 = q.w || 0;
-    var x2 = this.x;
-    var y2 = this.y;
-    var z2 = this.z;
-    var w2 = this.w;
+  /**
+   * Multiply the current Quaternion by input Quaternion q on the left, i.e. q * this.
+   * Left-handed multiplication.
+   *
+   * @param {Quaternion} q - The Quaternion to multiply by on the left
+   * @returns {Quaternion} this instance for chaining
+   */
+  leftMultiply(q) {
+    const x1 = q.x;
+    const y1 = q.y;
+    const z1 = q.z;
+    const w1 = q.w || 0;
+    const x2 = this.x;
+    const y2 = this.y;
+    const z2 = this.z;
+    const w2 = this.w;
 
-    this.w = w1*w2 - x1*x2 - y1*y2 - z1*z2;
-    this.x = x1*w2 + x2*w1 + y2*z1 - y1*z2;
-    this.y = y1*w2 + y2*w1 + x1*z2 - x2*z1;
-    this.z = z1*w2 + z2*w1 + x2*y1 - x1*y2;
+    this.w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
+    this.x = x1 * w2 + x2 * w1 + y2 * z1 - y1 * z2;
+    this.y = y1 * w2 + y2 * w1 + x1 * z2 - x2 * z1;
+    this.z = z1 * w2 + z2 * w1 + x2 * y1 - x1 * y2;
     return this;
-};
+  }
 
-/**
- * Apply the current Quaternion to input Vec3 v, according to
- * v' = ~q * v * q.
- *
- * @method
- *
- * @param {Vec3} v The reference Vec3.
- * @param {Vec3} output Vec3 in which to place the result.
- *
- * @return {Vec3} The rotated version of the Vec3.
- */
-Quaternion.prototype.rotateVector = function rotateVector(v, output) {
-    var cw = this.w;
-    var cx = -this.x;
-    var cy = -this.y;
-    var cz = -this.z;
+  /**
+   * Apply the current Quaternion to input Vec3 v, according to
+   * v' = ~q * v * q.
+   *
+   * @param {Vec3} v - The reference Vec3
+   * @param {Vec3} output - Vec3 in which to place the result
+   * @returns {Vec3} The rotated version of the Vec3
+   */
+  rotateVector(v, output) {
+    const cw = this.w;
+    const cx = -this.x;
+    const cy = -this.y;
+    const cz = -this.z;
 
-    var vx = v.x;
-    var vy = v.y;
-    var vz = v.z;
+    const vx = v.x;
+    const vy = v.y;
+    const vz = v.z;
 
-    var tw = -cx * vx - cy * vy - cz * vz;
-    var tx = vx * cw + vy * cz - cy * vz;
-    var ty = vy * cw + cx * vz - vx * cz;
-    var tz = vz * cw + vx * cy - cx * vy;
+    const tw = -cx * vx - cy * vy - cz * vz;
+    const tx = vx * cw + vy * cz - cy * vz;
+    const ty = vy * cw + cx * vz - vx * cz;
+    const tz = vz * cw + vx * cy - cx * vy;
 
-    var w = cw;
-    var x = -cx;
-    var y = -cy;
-    var z = -cz;
+    const w = cw;
+    const x = -cx;
+    const y = -cy;
+    const z = -cz;
 
     output.x = tx * w + x * tw + y * tz - ty * z;
     output.y = ty * w + y * tw + tx * z - x * tz;
     output.z = tz * w + z * tw + x * ty - tx * y;
     return output;
-};
+  }
 
-/**
- * Invert the current Quaternion.
- *
- * @method
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.invert = function invert() {
+  /**
+   * Invert the current Quaternion.
+   *
+   * @returns {Quaternion} this instance for chaining
+   */
+  invert() {
     this.w = -this.w;
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
     return this;
-};
+  }
 
-/**
- * Conjugate the current Quaternion.
- *
- * @method
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.conjugate = function conjugate() {
+  /**
+   * Conjugate the current Quaternion.
+   *
+   * @returns {Quaternion} this instance for chaining
+   */
+  conjugate() {
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
     return this;
-};
+  }
 
-/**
- * Compute the length (norm) of the current Quaternion.
- *
- * @method
- *
- * @return {Number} length of the Quaternion
- */
-Quaternion.prototype.length = function length() {
-    var w = this.w;
-    var x = this.x;
-    var y = this.y;
-    var z = this.z;
+  /**
+   * Compute the length (norm) of the current Quaternion.
+   *
+   * @returns {number} Length of the Quaternion
+   */
+  length() {
+    const w = this.w;
+    const x = this.x;
+    const y = this.y;
+    const z = this.z;
     return sqrt(w * w + x * x + y * y + z * z);
-};
+  }
 
-/**
- * Alter the current Quaternion to be of unit length;
- *
- * @method
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.normalize = function normalize() {
-    var w = this.w;
-    var x = this.x;
-    var y = this.y;
-    var z = this.z;
-    var length = sqrt(w * w + x * x + y * y + z * z);
+  /**
+   * Alter the current Quaternion to be of unit length.
+   *
+   * @returns {Quaternion} this instance for chaining
+   */
+  normalize() {
+    const w = this.w;
+    const x = this.x;
+    const y = this.y;
+    const z = this.z;
+    let length = sqrt(w * w + x * x + y * y + z * z);
     if (length === 0) return this;
     length = 1 / length;
     this.w *= length;
@@ -206,112 +187,97 @@ Quaternion.prototype.normalize = function normalize() {
     this.y *= length;
     this.z *= length;
     return this;
-};
+  }
 
-/**
- * Set the w, x, y, z components of the current Quaternion.
- *
- * @method
- *
- * @param {Number} w The w component.
- * @param {Number} x The x component.
- * @param {Number} y The y component.
- * @param {Number} z The z component.
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.set = function set(w, x ,y, z) {
+  /**
+   * Set the w, x, y, z components of the current Quaternion.
+   *
+   * @param {number} w - The w component
+   * @param {number} x - The x component
+   * @param {number} y - The y component
+   * @param {number} z - The z component
+   * @returns {Quaternion} this instance for chaining
+   */
+  set(w, x, y, z) {
     if (w != null) this.w = w;
     if (x != null) this.x = x;
     if (y != null) this.y = y;
     if (z != null) this.z = z;
     return this;
-};
+  }
 
-/**
- * Copy input Quaternion q onto the current Quaternion.
- *
- * @method
- *
- * @param {Quaternion} q The reference Quaternion.
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.copy = function copy(q) {
+  /**
+   * Copy input Quaternion q onto the current Quaternion.
+   *
+   * @param {Quaternion} q - The reference Quaternion
+   * @returns {Quaternion} this instance for chaining
+   */
+  copy(q) {
     this.w = q.w;
     this.x = q.x;
     this.y = q.y;
     this.z = q.z;
     return this;
-};
+  }
 
-/**
- * Reset the current Quaternion.
- *
- * @method
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.clear = function clear() {
+  /**
+   * Reset the current Quaternion.
+   *
+   * @returns {Quaternion} this instance for chaining
+   */
+  clear() {
     this.w = 1;
     this.x = 0;
     this.y = 0;
     this.z = 0;
     return this;
-};
+  }
 
-/**
- * The dot product. Can be used to determine the cosine of the angle between
- * the two rotations, assuming both Quaternions are of unit length.
- *
- * @method
- *
- * @param {Quaternion} q The other Quaternion.
- *
- * @return {Number} the resulting dot product
- */
-Quaternion.prototype.dot = function dot(q) {
+  /**
+   * The dot product. Can be used to determine the cosine of the angle between
+   * the two rotations, assuming both Quaternions are of unit length.
+   *
+   * @param {Quaternion} q - The other Quaternion
+   * @returns {number} The resulting dot product
+   */
+  dot(q) {
     return this.w * q.w + this.x * q.x + this.y * q.y + this.z * q.z;
-};
+  }
 
-/**
- * Spherical linear interpolation.
- *
- * @method
- *
- * @param {Quaternion} q The final orientation.
- * @param {Number} t The tween parameter.
- * @param {Vec3} output Vec3 in which to put the result.
- *
- * @return {Quaternion} The quaternion the slerp results were saved to
- */
-Quaternion.prototype.slerp = function slerp(q, t, output) {
-    var w = this.w;
-    var x = this.x;
-    var y = this.y;
-    var z = this.z;
+  /**
+   * Spherical linear interpolation.
+   *
+   * @param {Quaternion} q - The final orientation
+   * @param {number} t - The tween parameter
+   * @param {Quaternion} output - Quaternion in which to put the result
+   * @returns {Quaternion} The quaternion the slerp results were saved to
+   */
+  slerp(q, t, output) {
+    const w = this.w;
+    const x = this.x;
+    const y = this.y;
+    const z = this.z;
 
-    var qw = q.w;
-    var qx = q.x;
-    var qy = q.y;
-    var qz = q.z;
+    const qw = q.w;
+    const qx = q.x;
+    const qy = q.y;
+    const qz = q.z;
 
-    var omega;
-    var cosomega;
-    var sinomega;
-    var scaleFrom;
-    var scaleTo;
+    let omega;
+    let cosomega;
+    let sinomega;
+    let scaleFrom;
+    let scaleTo;
 
     cosomega = w * qw + x * qx + y * qy + z * qz;
     if ((1.0 - cosomega) > 1e-5) {
-        omega = acos(cosomega);
-        sinomega = sin(omega);
-        scaleFrom = sin((1.0 - t) * omega) / sinomega;
-        scaleTo = sin(t * omega) / sinomega;
-    }
-    else {
-        scaleFrom = 1.0 - t;
-        scaleTo = t;
+      omega = acos(cosomega);
+      sinomega = sin(omega);
+      scaleFrom = sin((1.0 - t) * omega) / sinomega;
+      scaleTo = sin(t * omega) / sinomega;
+    } else {
+      scaleFrom = 1.0 - t;
+      scaleTo = t;
     }
 
     output.w = w * scaleFrom + qw * scaleTo;
@@ -320,58 +286,52 @@ Quaternion.prototype.slerp = function slerp(q, t, output) {
     output.z = z * scaleFrom + qz * scaleTo;
 
     return output;
-};
+  }
 
-/**
- * Get the Mat33 matrix corresponding to the current Quaternion.
- *
- * @method
- *
- * @param {Object} output Object to process the Transform matrix
- *
- * @return {Array} the Quaternion as a Transform matrix
- */
-Quaternion.prototype.toMatrix = function toMatrix(output) {
-    var w = this.w;
-    var x = this.x;
-    var y = this.y;
-    var z = this.z;
+  /**
+   * Get the Mat33 matrix corresponding to the current Quaternion.
+   *
+   * @param {Mat33} output - Object to process the Transform matrix
+   * @returns {Mat33} The Quaternion as a Transform matrix
+   */
+  toMatrix(output) {
+    const w = this.w;
+    const x = this.x;
+    const y = this.y;
+    const z = this.z;
 
-    var xx = x*x;
-    var yy = y*y;
-    var zz = z*z;
-    var xy = x*y;
-    var xz = x*z;
-    var yz = y*z;
+    const xx = x * x;
+    const yy = y * y;
+    const zz = z * z;
+    const xy = x * y;
+    const xz = x * z;
+    const yz = y * z;
 
     return output.set([
-        1 - 2 * (yy + zz), 2 * (xy - w*z), 2 * (xz + w*y),
-        2 * (xy + w*z), 1 - 2 * (xx + zz), 2 * (yz - w*x),
-        2 * (xz - w*y), 2 * (yz + w*x), 1 - 2 * (xx + yy)
+      1 - 2 * (yy + zz), 2 * (xy - w * z), 2 * (xz + w * y),
+      2 * (xy + w * z), 1 - 2 * (xx + zz), 2 * (yz - w * x),
+      2 * (xz - w * y), 2 * (yz + w * x), 1 - 2 * (xx + yy),
     ]);
-};
+  }
 
-/**
- * The rotation angles about the x, y, and z axes corresponding to the
- * current Quaternion, when applied in the ZYX order.
- *
- * @method
- *
- * @param {Vec3} output Vec3 in which to put the result.
- *
- * @return {Vec3} the Vec3 the result was stored in
- */
-Quaternion.prototype.toEuler = function toEuler(output) {
-    var w = this.w;
-    var x = this.x;
-    var y = this.y;
-    var z = this.z;
+  /**
+   * The rotation angles about the x, y, and z axes corresponding to the
+   * current Quaternion, when applied in the ZYX order.
+   *
+   * @param {Vec3} output - Vec3 in which to put the result
+   * @returns {Vec3} The Vec3 the result was stored in
+   */
+  toEuler(output) {
+    const w = this.w;
+    const x = this.x;
+    const y = this.y;
+    const z = this.z;
 
-    var xx = x * x;
-    var yy = y * y;
-    var zz = z * z;
+    const xx = x * x;
+    const yy = y * y;
+    const zz = z * z;
 
-    var ty = 2 * (x * z + y * w);
+    let ty = 2 * (x * z + y * w);
     ty = ty < -1 ? -1 : ty > 1 ? 1 : ty;
 
     output.x = atan2(2 * (x * w - y * z), 1 - 2 * (xx + yy));
@@ -379,32 +339,28 @@ Quaternion.prototype.toEuler = function toEuler(output) {
     output.z = atan2(2 * (z * w - x * y), 1 - 2 * (yy + zz));
 
     return output;
-};
+  }
 
-/**
- * The Quaternion corresponding to the Euler angles x, y, and z,
- * applied in the ZYX order.
- *
- * @method
- *
- * @param {Number} x The angle of rotation about the x axis.
- * @param {Number} y The angle of rotation about the y axis.
- * @param {Number} z The angle of rotation about the z axis.
- * @param {Quaternion} output Quaternion in which to put the result.
- *
- * @return {Quaternion} The equivalent Quaternion.
- */
-Quaternion.prototype.fromEuler = function fromEuler(x, y, z) {
-    var hx = x * 0.5;
-    var hy = y * 0.5;
-    var hz = z * 0.5;
+  /**
+   * The Quaternion corresponding to the Euler angles x, y, and z,
+   * applied in the ZYX order.
+   *
+   * @param {number} x - The angle of rotation about the x axis
+   * @param {number} y - The angle of rotation about the y axis
+   * @param {number} z - The angle of rotation about the z axis
+   * @returns {Quaternion} this instance for chaining
+   */
+  fromEuler(x, y, z) {
+    const hx = x * 0.5;
+    const hy = y * 0.5;
+    const hz = z * 0.5;
 
-    var sx = sin(hx);
-    var sy = sin(hy);
-    var sz = sin(hz);
-    var cx = cos(hx);
-    var cy = cos(hy);
-    var cz = cos(hz);
+    const sx = sin(hx);
+    const sy = sin(hy);
+    const sz = sin(hz);
+    const cx = cos(hx);
+    const cy = cos(hy);
+    const cz = cos(hz);
 
     this.w = cx * cy * cz - sx * sy * sz;
     this.x = sx * cy * cz + cx * sy * sz;
@@ -412,137 +368,124 @@ Quaternion.prototype.fromEuler = function fromEuler(x, y, z) {
     this.z = cx * cy * sz + sx * sy * cz;
 
     return this;
-};
+  }
 
-/**
- * Alter the current Quaternion to reflect a rotation of input angle about
- * input axis x, y, and z.
- *
- * @method
- *
- * @param {Number} angle The angle of rotation.
- * @param {Vec3} x The axis of rotation.
- * @param {Vec3} y The axis of rotation.
- * @param {Vec3} z The axis of rotation.
- *
- * @return {Quaternion} this
- */
-Quaternion.prototype.fromAngleAxis = function fromAngleAxis(angle, x, y, z) {
-    var len = sqrt(x * x + y * y + z * z);
+  /**
+   * Alter the current Quaternion to reflect a rotation of input angle about
+   * input axis x, y, and z.
+   *
+   * @param {number} angle - The angle of rotation
+   * @param {number} x - The x axis of rotation
+   * @param {number} y - The y axis of rotation
+   * @param {number} z - The z axis of rotation
+   * @returns {Quaternion} this instance for chaining
+   */
+  fromAngleAxis(angle, x, y, z) {
+    let len = sqrt(x * x + y * y + z * z);
     if (len === 0) {
-        this.w = 1;
-        this.x = this.y = this.z = 0;
-    }
-    else {
-        len = 1 / len;
-        var halfTheta = angle * 0.5;
-        var s = sin(halfTheta);
-        this.w = cos(halfTheta);
-        this.x = s * x * len;
-        this.y = s * y * len;
-        this.z = s * z * len;
+      this.w = 1;
+      this.x = this.y = this.z = 0;
+    } else {
+      len = 1 / len;
+      const halfTheta = angle * 0.5;
+      const s = sin(halfTheta);
+      this.w = cos(halfTheta);
+      this.x = s * x * len;
+      this.y = s * y * len;
+      this.z = s * z * len;
     }
     return this;
-};
+  }
 
-/**
- * Multiply the input Quaternions.
- * Left-handed coordinate system multiplication.
- *
- * @method
- *
- * @param {Quaternion} q1 The left Quaternion.
- * @param {Quaternion} q2 The right Quaternion.
- * @param {Quaternion} output Quaternion in which to place the result.
- *
- * @return {Quaternion} The product of multiplication.
- */
-Quaternion.multiply = function multiply(q1, q2, output) {
-    var w1 = q1.w || 0;
-    var x1 = q1.x;
-    var y1 = q1.y;
-    var z1 = q1.z;
+  /**
+   * Multiply the input Quaternions.
+   * Left-handed coordinate system multiplication.
+   *
+   * @static
+   * @param {Quaternion} q1 - The left Quaternion
+   * @param {Quaternion} q2 - The right Quaternion
+   * @param {Quaternion} output - Quaternion in which to place the result
+   * @returns {Quaternion} The product of multiplication
+   */
+  static multiply(q1, q2, output) {
+    const w1 = q1.w || 0;
+    const x1 = q1.x;
+    const y1 = q1.y;
+    const z1 = q1.z;
 
-    var w2 = q2.w || 0;
-    var x2 = q2.x;
-    var y2 = q2.y;
-    var z2 = q2.z;
+    const w2 = q2.w || 0;
+    const x2 = q2.x;
+    const y2 = q2.y;
+    const z2 = q2.z;
 
     output.w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
     output.x = x1 * w2 + x2 * w1 + y2 * z1 - y1 * z2;
     output.y = y1 * w2 + y2 * w1 + x1 * z2 - x2 * z1;
     output.z = z1 * w2 + z2 * w1 + x2 * y1 - x1 * y2;
     return output;
-};
+  }
 
-/**
- * Normalize the input quaternion.
- *
- * @method
- *
- * @param {Quaternion} q The reference Quaternion.
- * @param {Quaternion} output Quaternion in which to place the result.
- *
- * @return {Quaternion} The normalized quaternion.
- */
-Quaternion.normalize = function normalize(q, output) {
-    var w = q.w;
-    var x = q.x;
-    var y = q.y;
-    var z = q.z;
-    var length = sqrt(w * w + x * x + y * y + z * z);
-    if (length === 0) return this;
+  /**
+   * Normalize the input quaternion.
+   *
+   * @static
+   * @param {Quaternion} q - The reference Quaternion
+   * @param {Quaternion} output - Quaternion in which to place the result
+   * @returns {Quaternion} The normalized quaternion
+   */
+  static normalize(q, output) {
+    const w = q.w;
+    const x = q.x;
+    const y = q.y;
+    const z = q.z;
+    let length = sqrt(w * w + x * x + y * y + z * z);
+    if (length === 0) return output;
     length = 1 / length;
-    output.w *= length;
-    output.x *= length;
-    output.y *= length;
-    output.z *= length;
+    output.w = w * length;
+    output.x = x * length;
+    output.y = y * length;
+    output.z = z * length;
     return output;
-};
+  }
 
-/**
- * The conjugate of the input Quaternion.
- *
- * @method
- *
- * @param {Quaternion} q The reference Quaternion.
- * @param {Quaternion} output Quaternion in which to place the result.
- *
- * @return {Quaternion} The conjugate Quaternion.
- */
-Quaternion.conjugate = function conjugate(q, output) {
+  /**
+   * The conjugate of the input Quaternion.
+   *
+   * @static
+   * @param {Quaternion} q - The reference Quaternion
+   * @param {Quaternion} output - Quaternion in which to place the result
+   * @returns {Quaternion} The conjugate Quaternion
+   */
+  static conjugate(q, output) {
     output.w = q.w;
     output.x = -q.x;
     output.y = -q.y;
     output.z = -q.z;
     return output;
-};
+  }
 
-/**
- * Clone the input Quaternion.
- *
- * @method
- *
- * @param {Quaternion} q the reference Quaternion.
- *
- * @return {Quaternion} The cloned Quaternion.
- */
-Quaternion.clone = function clone(q) {
+  /**
+   * Clone the input Quaternion.
+   *
+   * @static
+   * @param {Quaternion} q - The reference Quaternion
+   * @returns {Quaternion} The cloned Quaternion
+   */
+  static clone(q) {
     return new Quaternion(q.w, q.x, q.y, q.z);
-};
+  }
 
-/**
- * The dot product of the two input Quaternions.
- *
- * @method
- *
- * @param {Quaternion} q1 The left Quaternion.
- * @param {Quaternion} q2 The right Quaternion.
- *
- * @return {Number} The dot product of the two Quaternions.
- */
-Quaternion.dot = function dot(q1, q2) {
+  /**
+   * The dot product of the two input Quaternions.
+   *
+   * @static
+   * @param {Quaternion} q1 - The left Quaternion
+   * @param {Quaternion} q2 - The right Quaternion
+   * @returns {number} The dot product of the two Quaternions
+   */
+  static dot(q1, q2) {
     return q1.w * q2.w + q1.x * q2.x + q1.y * q2.y + q1.z * q2.z;
-};
+  }
+}
 
 module.exports = Quaternion;
