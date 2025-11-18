@@ -22,63 +22,63 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+let _ID = 0;
 
-var _ID = 0;
 /**
  * Base Constraint class to be used in the Physics
  * Subclass this class to implement a constraint
  *
  * @virtual
  * @class Constraint
- * @param {Object} options The options hash.
+ * @param {Object} options - The options hash.
  */
-function Constraint(options) {
+class Constraint {
+  constructor(options) {
     options = options || {};
     this.setOptions(options);
-
     this._ID = _ID++;
-}
+  }
 
-/**
- * Decorates the Constraint with the options object.
- *
- * @method
- * @param {Object} options The options hash.
- * @return {undefined} undefined
- */
-Constraint.prototype.setOptions = function setOptions(options) {
-    for (var key in options) this[key] = options[key];
+  /**
+   * Decorates the Constraint with the options object.
+   *
+   * @method setOptions
+   * @param {Object} options - The options hash.
+   * @returns {void}
+   */
+  setOptions(options) {
+    for (const key in options) this[key] = options[key];
     this.init(options);
-};
+  }
 
-/**
- * Method invoked upon instantiation and the setting of options.
- *
- * @method
- * @param {Object} options The options hash.
- * @return {undefined} undefined
- */
-Constraint.prototype.init = function init(options) {};
+  /**
+   * Method invoked upon instantiation and the setting of options.
+   *
+   * @method init
+   * @param {Object} options - The options hash.
+   * @returns {void}
+   */
+  init(options) {}
 
-/**
- * Detect violations of the constraint. Warm start the constraint, if possible.
- *
- * @method
- * @param {Number} time The current time in the physics engine.
- * @param {Number} dt The physics engine frame delta.
- * @return {undefined} undefined
- */
-Constraint.prototype.update = function update(time, dt) {};
+  /**
+   * Detect violations of the constraint. Warm start the constraint, if possible.
+   *
+   * @method update
+   * @param {number} time - The current time in the physics engine.
+   * @param {number} dt - The physics engine frame delta.
+   * @returns {void}
+   */
+  update(time, dt) {}
 
-/**
- * Apply impulses to resolve the constraint.
- *
- * @method
- * @param {Number} time The current time in the physics engine.
- * @param {Number} dt The physics engine frame delta.
- * @return {undefined} undefined
- */
-Constraint.prototype.resolve = function resolve(time, dt) {};
+  /**
+   * Apply impulses to resolve the constraint.
+   *
+   * @method resolve
+   * @param {number} time - The current time in the physics engine.
+   * @param {number} dt - The physics engine frame delta.
+   * @returns {void}
+   */
+  resolve(time, dt) {}
+}
 
 module.exports = Constraint;

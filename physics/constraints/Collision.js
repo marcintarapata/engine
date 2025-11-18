@@ -22,33 +22,31 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+const Vec3 = require('../../math/Vec3');
+const Constraint = require('./Constraint');
 
-var Vec3 = require('../../math/Vec3');
-var Constraint = require('./Constraint');
+const SweepAndPrune = require('./collision/SweepAndPrune');
+const BruteForce = require('./collision/BruteForce');
+const ConvexCollision = require('./collision/ConvexCollisionDetection');
+const gjk = ConvexCollision.gjk;
+const epa = ConvexCollision.epa;
+const ContactManifoldTable = require('./collision/ContactManifold');
 
-var SweepAndPrune = require('./collision/SweepAndPrune');
-var BruteForce = require('./collision/BruteForce');
-var ConvexCollision = require('./collision/ConvexCollisionDetection');
-var gjk = ConvexCollision.gjk;
-var epa = ConvexCollision.epa;
-var ContactManifoldTable = require('./collision/ContactManifold');
-
-var ObjectManager = require('../../utilities/ObjectManager');
+const ObjectManager = require('../../utilities/ObjectManager');
 ObjectManager.register('CollisionData', CollisionData);
-var oMRequestCollisionData = ObjectManager.requestCollisionData;
+const oMRequestCollisionData = ObjectManager.requestCollisionData;
 
-var VEC_REGISTER = new Vec3();
+const VEC_REGISTER = new Vec3();
 
 /**
  * Helper function to clamp a value to a given range.
  *
  * @method
  * @private
- * @param {Number} value The value to clamp.
- * @param {Number} lower The lower end.
- * @param {Number} upper The upper end.
- * @return {Number} The clamped value.
+ * @param {Number} value - The value to clamp.
+ * @param {Number} lower - The lower end.
+ * @param {Number} upper - The upper end.
+ * @returns {Number} The clamped value.
  */
 function clamp(value, lower, upper) {
     return value < lower ? lower : value > upper ? upper : value;
@@ -58,12 +56,12 @@ function clamp(value, lower, upper) {
  * Object maintaining various figures of a collision. Registered in ObjectManager.
  *
  * @class CollisionData
- * @param {Number} penetration The degree of penetration.
- * @param {Vec3} normal The normal for the collision.
- * @param {Vec3} worldContactA The contact for A in world coordinates.
- * @param {Vec3} worldContactB The contact for B in world coordinates.
- * @param {Vec3} localContactA The contact for A in local coordinates.
- * @param {Vec3} localContactB The contact for B in local coordinates.
+ * @param {Number} penetration - The degree of penetration.
+ * @param {Vec3} normal - The normal for the collision.
+ * @param {Vec3} worldContactA - The contact for A in world coordinates.
+ * @param {Vec3} worldContactB - The contact for B in world coordinates.
+ * @param {Vec3} localContactA - The contact for A in local coordinates.
+ * @param {Vec3} localContactB - The contact for B in local coordinates.
  */
 function CollisionData(penetration, normal, worldContactA, worldContactB, localContactA, localContactB) {
     this.penetration = penetration;
@@ -78,13 +76,13 @@ function CollisionData(penetration, normal, worldContactA, worldContactB, localC
  * Used by ObjectManager to reset the object with different data.
  *
  * @method
- * @param {Number} penetration The degree of penetration.
- * @param {Vec3} normal The normal for the collision.
- * @param {Vec3} worldContactA The contact for A in world coordinates.
- * @param {Vec3} worldContactB The contact for B in world coordinates.
- * @param {Vec3} localContactA The contact for A in local coordinates.
- * @param {Vec3} localContactB The contact for B in local coordinates.
- * @return {CollisionData} this
+ * @param {Number} penetration - The degree of penetration.
+ * @param {Vec3} normal - The normal for the collision.
+ * @param {Vec3} worldContactA - The contact for A in world coordinates.
+ * @param {Vec3} worldContactB - The contact for B in world coordinates.
+ * @param {Vec3} localContactA - The contact for A in local coordinates.
+ * @param {Vec3} localContactB - The contact for B in local coordinates.
+ * @returns {CollisionData} this
  */
 CollisionData.prototype.reset = function reset(penetration, normal, worldContactA, worldContactB, localContactA, localContactB) {
     this.penetration = penetration;
@@ -102,115 +100,138 @@ CollisionData.prototype.reset = function reset(penetration, normal, worldContact
  *
  * @class Collision
  * @extends Constraint
- * @param {Particle[]} targets The bodies to track.
- * @param {Object} options The options hash.
+ * @param {Particle[]} targets - The bodies to track.
+ * @param {Object} options - The options hash.
  */
-function Collision(targets, options) {
-    this.targets = [];
-    if (targets) this.targets = this.targets.concat(targets);
+class Collision extends Constraint {
+    constructor(targets, options) {
+        super(options);
 
-    Constraint.call(this, options);
+        this.targets = [];
+        if (targets) this.targets = this.targets.concat(targets);
+    }
+
+    /**
+     * Initialize the Collision tracker. Sets defaults if a property was not already set.
+     *
+     * @method
+     * @returns {undefined} undefined
+     */
+    init() {
+        if (this.broadPhase) {
+            const BroadPhase = this.broadphase;
+            if (BroadPhase instanceof Function) this.broadPhase = new BroadPhase(this.targets);
+        }
+        else this.broadPhase = new SweepAndPrune(this.targets);
+        this.contactManifoldTable = this.contactManifoldTable || new ContactManifoldTable();
+    }
+
+    /**
+     * Collison detection. Updates the existing contact manifolds, runs the broadphase, and performs narrowphase
+     * collision detection. Warm starts the contacts based on the results of the previous physics frame
+     * and prepares necesssary calculations for the resolution.
+     *
+     * @method
+     * @param {Number} time - The current time in the physics engine.
+     * @param {Number} dt - The physics engine frame delta.
+     * @returns {undefined} undefined
+     */
+    update(time, dt) {
+        this.contactManifoldTable.update(dt);
+        if (this.targets.length === 0) return;
+        let i, len;
+        for (i = 0, len = this.targets.length; i < len; i++) {
+            this.targets[i].updateShape();
+        }
+        const potentialCollisions = this.broadPhase.update();
+        let pair;
+        for (i = 0, len = potentialCollisions.length; i < len; i++) {
+            pair = potentialCollisions[i];
+            if (pair) this.applyNarrowPhase(pair);
+        }
+        this.contactManifoldTable.prepContacts(dt);
+    }
+
+    /**
+     * Apply impulses to resolve all Contact constraints.
+     *
+     * @method
+     * @param {Number} time - The current time in the physics engine.
+     * @param {Number} dt - The physics engine frame delta.
+     * @returns {undefined} undefined
+     */
+    resolve(time, dt) {
+        this.contactManifoldTable.resolveManifolds(dt);
+    }
+
+    /**
+     * Add a target or targets to the collision system.
+     *
+     * @method
+     * @param {Particle} target - The body to begin tracking.
+     * @returns {undefined} undefined
+     */
+    addTarget(target) {
+        this.targets.push(target);
+        this.broadPhase.add(target);
+    }
+
+    /**
+     * Remove a target or targets from the collision system.
+     *
+     * @method
+     * @param {Particle} target - The body to remove.
+     * @returns {undefined} undefined
+     */
+    removeTarget(target) {
+        const index = this.targets.indexOf(target);
+        if (index < 0) return;
+        this.targets.splice(index, 1);
+        this.broadPhase.remove(target);
+    }
+
+    /**
+     * Narrowphase collision detection,
+     * registers the Contact constraints for colliding bodies.
+     *
+     * Will detect the type of bodies in the collision.
+     *
+     * @method
+     * @param {Particle[]} targets - The targets.
+     * @returns {undefined} undefined
+     */
+    applyNarrowPhase(targets) {
+        for (let i = 0, len = targets.length; i < len; i++) {
+            for (let j = i + 1; j < len; j++) {
+                const  a = targets[i];
+                const b = targets[j];
+
+                if ((a.collisionMask & b.collisionGroup && a.collisionGroup & b.collisionMask) === 0) continue;
+
+                const collisionType = a.type | b.type;
+
+                if (dispatch[collisionType]) dispatch[collisionType](this, a, b);
+            }
+        }
+    }
 }
 
-Collision.prototype = Object.create(Constraint.prototype);
-Collision.prototype.constructor = Collision;
+const CONVEX = 1 << 0;
+const BOX = 1 << 1;
+const SPHERE = 1 << 2;
+const WALL = 1 << 3;
 
-/**
- * Initialize the Collision tracker. Sets defaults if a property was not already set.
- *
- * @method
- * @return {undefined} undefined
- */
-Collision.prototype.init = function() {
-    if (this.broadPhase) {
-        var BroadPhase = this.broadphase;
-        if (BroadPhase instanceof Function) this.broadPhase = new BroadPhase(this.targets);
-    }
-    else this.broadPhase = new SweepAndPrune(this.targets);
-    this.contactManifoldTable = this.contactManifoldTable || new ContactManifoldTable();
-};
+const CONVEX_CONVEX = CONVEX | CONVEX;
+const BOX_BOX = BOX | BOX;
+const BOX_CONVEX = BOX | CONVEX;
+const SPHERE_SPHERE = SPHERE | SPHERE;
+const BOX_SPHERE = BOX | SPHERE;
+const CONVEX_SPHERE = CONVEX | SPHERE;
+const CONVEX_WALL = CONVEX | WALL;
+const BOX_WALL = BOX | WALL;
+const SPHERE_WALL = SPHERE | WALL;
 
-/**
- * Collison detection. Updates the existing contact manifolds, runs the broadphase, and performs narrowphase
- * collision detection. Warm starts the contacts based on the results of the previous physics frame
- * and prepares necesssary calculations for the resolution.
- *
- * @method
- * @param {Number} time The current time in the physics engine.
- * @param {Number} dt The physics engine frame delta.
- * @return {undefined} undefined
- */
- Collision.prototype.update = function update(time, dt) {
-    this.contactManifoldTable.update(dt);
-    if (this.targets.length === 0) return;
-    var i, len;
-    for (i = 0, len = this.targets.length; i < len; i++) {
-        this.targets[i].updateShape();
-    }
-    var potentialCollisions = this.broadPhase.update();
-    var pair;
-    for (i = 0, len = potentialCollisions.length; i < len; i++) {
-        pair = potentialCollisions[i];
-        if (pair) this.applyNarrowPhase(pair);
-    }
-    this.contactManifoldTable.prepContacts(dt);
-};
-
-/**
- * Apply impulses to resolve all Contact constraints.
- *
- * @method
- * @param {Number} time The current time in the physics engine.
- * @param {Number} dt The physics engine frame delta.
- * @return {undefined} undefined
- */
-Collision.prototype.resolve = function resolve(time, dt) {
-    this.contactManifoldTable.resolveManifolds(dt);
-};
-
-/**
- * Add a target or targets to the collision system.
- *
- * @method
- * @param {Particle} target The body to begin tracking.
- * @return {undefined} undefined
- */
-Collision.prototype.addTarget = function addTarget(target) {
-    this.targets.push(target);
-    this.broadPhase.add(target);
-};
-
-/**
- * Remove a target or targets from the collision system.
- *
- * @method
- * @param {Particle} target The body to remove.
- * @return {undefined} undefined
- */
-Collision.prototype.removeTarget = function removeTarget(target) {
-    var index = this.targets.indexOf(target);
-    if (index < 0) return;
-    this.targets.splice(index, 1);
-    this.broadPhase.remove(target);
-};
-
-
-var CONVEX = 1 << 0;
-var BOX = 1 << 1;
-var SPHERE = 1 << 2;
-var WALL = 1 << 3;
-
-var CONVEX_CONVEX = CONVEX | CONVEX;
-var BOX_BOX = BOX | BOX;
-var BOX_CONVEX = BOX | CONVEX;
-var SPHERE_SPHERE = SPHERE | SPHERE;
-var BOX_SPHERE = BOX | SPHERE;
-var CONVEX_SPHERE = CONVEX | SPHERE;
-var CONVEX_WALL = CONVEX | WALL;
-var BOX_WALL = BOX | WALL;
-var SPHERE_WALL = SPHERE | WALL;
-
-var dispatch = {};
+const dispatch = {};
 dispatch[CONVEX_CONVEX] = convexIntersectConvex;
 dispatch[BOX_BOX] = convexIntersectConvex;
 dispatch[BOX_CONVEX] = convexIntersectConvex;
@@ -222,60 +243,35 @@ dispatch[BOX_WALL] = convexIntersectWall;
 dispatch[SPHERE_WALL] = convexIntersectWall;
 
 /**
- * Narrowphase collision detection,
- * registers the Contact constraints for colliding bodies.
- *
- * Will detect the type of bodies in the collision.
- *
- * @method
- * @param {Particle[]} targets The targets.
- * @return {undefined} undefined
- */
-Collision.prototype.applyNarrowPhase = function applyNarrowPhase(targets) {
-    for (var i = 0, len = targets.length; i < len; i++) {
-        for (var j = i + 1; j < len; j++) {
-            var  a = targets[i];
-            var b = targets[j];
-
-            if ((a.collisionMask & b.collisionGroup && a.collisionGroup & b.collisionMask) === 0) continue;
-
-            var collisionType = a.type | b.type;
-
-            if (dispatch[collisionType]) dispatch[collisionType](this, a, b);
-        }
-    }
-};
-
-/**
  * Detects sphere-sphere collisions and registers the Contact.
  *
  * @private
  * @method
- * @param {Object} context The Collision instance.
- * @param {Sphere} sphere1 One sphere collider.
- * @param {Sphere} sphere2 The other sphere collider.
- * @return {undefined} undefined
+ * @param {Object} context - The Collision instance.
+ * @param {Sphere} sphere1 - One sphere collider.
+ * @param {Sphere} sphere2 - The other sphere collider.
+ * @returns {undefined} undefined
  */
 function sphereIntersectSphere(context, sphere1, sphere2) {
-    var p1 = sphere1.position;
-    var p2 = sphere2.position;
-    var relativePosition = Vec3.subtract(p2, p1, new Vec3());
-    var distance = relativePosition.length();
-    var sumRadii = sphere1.radius + sphere2.radius;
-    var n = relativePosition.scale(1/distance);
+    const p1 = sphere1.position;
+    const p2 = sphere2.position;
+    const relativePosition = Vec3.subtract(p2, p1, new Vec3());
+    const distance = relativePosition.length();
+    const sumRadii = sphere1.radius + sphere2.radius;
+    const n = relativePosition.scale(1/distance);
 
-    var overlap = sumRadii - distance;
+    const overlap = sumRadii - distance;
 
     // Distance check
     if (overlap < 0) return;
 
-    var rSphere1 = Vec3.scale(n, sphere1.radius, new Vec3());
-    var rSphere2 = Vec3.scale(n, -sphere2.radius, new Vec3());
+    const rSphere1 = Vec3.scale(n, sphere1.radius, new Vec3());
+    const rSphere2 = Vec3.scale(n, -sphere2.radius, new Vec3());
 
-    var wSphere1 = Vec3.add(p1, rSphere1, new Vec3());
-    var wSphere2 = Vec3.add(p2, rSphere2, new Vec3());
+    const wSphere1 = Vec3.add(p1, rSphere1, new Vec3());
+    const wSphere2 = Vec3.add(p2, rSphere2, new Vec3());
 
-    var collisionData = oMRequestCollisionData().reset(overlap, n, wSphere1, wSphere2, rSphere1, rSphere2);
+    const collisionData = oMRequestCollisionData().reset(overlap, n, wSphere1, wSphere2, rSphere1, rSphere2);
 
     context.contactManifoldTable.registerContact(sphere1, sphere2, collisionData);
 }
@@ -283,39 +279,39 @@ function sphereIntersectSphere(context, sphere1, sphere2) {
 /**
 * Detects box-sphere collisions and registers the Contact.
 *
-* @param {Object} context The Collision instance.
-* @param {Box} box The box collider.
-* @param {Sphere} sphere The sphere collider.
-* @return {undefined} undefined
+* @param {Object} context - The Collision instance.
+* @param {Box} box - The box collider.
+* @param {Sphere} sphere - The sphere collider.
+* @returns {undefined} undefined
 */
 function boxIntersectSphere(context, box, sphere) {
     if (box.type === SPHERE) {
-        var temp = sphere;
+        const temp = sphere;
         sphere = box;
         box = temp;
     }
 
-    var pb = box.position;
-    var ps = sphere.position;
-    var relativePosition = Vec3.subtract(ps, pb, VEC_REGISTER);
+    const pb = box.position;
+    const ps = sphere.position;
+    const relativePosition = Vec3.subtract(ps, pb, VEC_REGISTER);
 
-    var q = box.orientation;
+    const q = box.orientation;
 
-    var r = sphere.radius;
+    const r = sphere.radius;
 
-    var bsize = box.size;
-    var halfWidth = bsize[0]*0.5;
-    var halfHeight = bsize[1]*0.5;
-    var halfDepth = bsize[2]*0.5;
+    const bsize = box.size;
+    const halfWidth = bsize[0]*0.5;
+    const halfHeight = bsize[1]*0.5;
+    const halfDepth = bsize[2]*0.5;
 
     // x, y, z
-    var bnormals = box.normals;
-    var n1 = q.rotateVector(bnormals[1], new Vec3());
-    var n2 = q.rotateVector(bnormals[0], new Vec3());
-    var n3 = q.rotateVector(bnormals[2], new Vec3());
+    const bnormals = box.normals;
+    const n1 = q.rotateVector(bnormals[1], new Vec3());
+    const n2 = q.rotateVector(bnormals[0], new Vec3());
+    const n3 = q.rotateVector(bnormals[2], new Vec3());
 
     // Find the point on the cube closest to the center of the sphere
-    var closestPoint = new Vec3();
+    const closestPoint = new Vec3();
     closestPoint.x = clamp(Vec3.dot(relativePosition,n1), -halfWidth, halfWidth);
     closestPoint.y = clamp(Vec3.dot(relativePosition,n2), -halfHeight, halfHeight);
     closestPoint.z = clamp(Vec3.dot(relativePosition,n3), -halfDepth, halfDepth);
@@ -324,22 +320,22 @@ function boxIntersectSphere(context, box, sphere) {
     closestPoint.applyRotation(q);
 
     // The impact point in world space
-    var impactPoint = Vec3.add(pb, closestPoint, new Vec3());
-    var sphereToImpact = Vec3.subtract(impactPoint, ps, impactPoint);
-    var distanceToSphere = sphereToImpact.length();
+    const impactPoint = Vec3.add(pb, closestPoint, new Vec3());
+    const sphereToImpact = Vec3.subtract(impactPoint, ps, impactPoint);
+    const distanceToSphere = sphereToImpact.length();
 
     // If impact point is not closer to the sphere's center than its radius -> no collision
-    var overlap = r - distanceToSphere;
+    const overlap = r - distanceToSphere;
     if (overlap < 0) return;
 
-    var n = Vec3.scale(sphereToImpact, -1 / distanceToSphere, new Vec3());
-    var rBox = closestPoint;
-    var rSphere = sphereToImpact;
+    const n = Vec3.scale(sphereToImpact, -1 / distanceToSphere, new Vec3());
+    const rBox = closestPoint;
+    const rSphere = sphereToImpact;
 
-    var wBox = Vec3.add(pb, rBox, new Vec3());
-    var wSphere = Vec3.add(ps, rSphere, new Vec3());
+    const wBox = Vec3.add(pb, rBox, new Vec3());
+    const wSphere = Vec3.add(ps, rSphere, new Vec3());
 
-    var collisionData = oMRequestCollisionData().reset(overlap, n, wBox, wSphere, rBox, rSphere);
+    const collisionData = oMRequestCollisionData().reset(overlap, n, wBox, wSphere, rBox, rSphere);
 
     context.contactManifoldTable.registerContact(box, sphere, collisionData);
 }
@@ -348,55 +344,55 @@ function boxIntersectSphere(context, box, sphere) {
 * Detects convex-convex collisions and registers the Contact. Uses GJK to determine overlap and then
 * EPA to determine the actual collision data.
 *
-* @param {Object} context The Collision instance.
-* @param {Particle} convex1 One convex body collider.
-* @param {Particle} convex2 The other convex body collider.
-* @return {undefined} undefined
+* @param {Object} context - The Collision instance.
+* @param {Particle} convex1 - One convex body collider.
+* @param {Particle} convex2 - The other convex body collider.
+* @returns {undefined} undefined
 */
 function convexIntersectConvex(context, convex1, convex2) {
-    var glkSimplex = gjk(convex1, convex2);
+    const glkSimplex = gjk(convex1, convex2);
 
     // No simplex -> no collision
     if (!glkSimplex) return;
 
-    var collisionData = epa(convex1, convex2, glkSimplex);
+    const collisionData = epa(convex1, convex2, glkSimplex);
     if (collisionData !== null) context.contactManifoldTable.registerContact(convex1, convex2, collisionData);
 }
 
 /**
 * Detects convex-wall collisions and registers the Contact.
 *
-* @param {Object} context The Collision instance.
-* @param {Particle} convex The convex body collider.
-* @param {Wall} wall The wall collider.
-* @return {undefined} undefined
+* @param {Object} context - The Collision instance.
+* @param {Particle} convex - The convex body collider.
+* @param {Wall} wall - The wall collider.
+* @returns {undefined} undefined
 */
 function convexIntersectWall(context, convex, wall) {
     if (convex.type === WALL) {
-        var temp = wall;
+        const temp = wall;
         wall = convex;
         convex = temp;
     }
 
-    var convexPos = convex.position;
-    var wallPos = wall.position;
+    const convexPos = convex.position;
+    const wallPos = wall.position;
 
-    var n = wall.normal;
-    var invN = wall.invNormal;
+    const n = wall.normal;
+    const invN = wall.invNormal;
 
-    var rConvex = convex.support(invN);
-    var wConvex = Vec3.add(convexPos, rConvex, new Vec3());
+    const rConvex = convex.support(invN);
+    const wConvex = Vec3.add(convexPos, rConvex, new Vec3());
 
-    var diff = Vec3.subtract(wConvex, wallPos, VEC_REGISTER);
+    const diff = Vec3.subtract(wConvex, wallPos, VEC_REGISTER);
 
-    var penetration = Vec3.dot(diff, invN);
+    const penetration = Vec3.dot(diff, invN);
 
     if (penetration < 0) return;
 
-    var wWall = Vec3.scale(n, penetration, new Vec3()).add(wConvex);
-    var rWall = Vec3.subtract(wWall, wall.position, new Vec3());
+    const wWall = Vec3.scale(n, penetration, new Vec3()).add(wConvex);
+    const rWall = Vec3.subtract(wWall, wall.position, new Vec3());
 
-    var collisionData = oMRequestCollisionData().reset(penetration, invN, wConvex, wWall, rConvex, rWall);
+    const collisionData = oMRequestCollisionData().reset(penetration, invN, wConvex, wWall, rConvex, rWall);
 
     context.contactManifoldTable.registerContact(convex, wall, collisionData);
 }
