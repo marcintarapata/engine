@@ -22,21 +22,17 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
 /**
  * Returns a number guaranteed to be within the range [lower, upper].
  *
- * @method clamp
- * 
- * @param  {Number} value value to be processed by clamp
- * @param  {Number} lower lower bound  of the range
- * @param  {Number} upper upper bound of the range
- * @return {Number}       value between [lower, upper]
+ * @param {number} value - Value to be processed by clamp
+ * @param {number} lower - Lower bound of the range
+ * @param {number} upper - Upper bound of the range
+ * @returns {number} Value between [lower, upper]
  */
-function clamp(value, lower, upper) {
-    return value < lower ? lower : value > upper ? upper : value;
-}
+const clamp = (value, lower, upper) => {
+  return value < lower ? lower : value > upper ? upper : value;
+};
 
 module.exports = clamp;
 
