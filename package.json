@@ -1,32 +1,49 @@
 {
   "name": "famous",
   "version": "0.7.1",
-  "description": "",
+  "description": "A powerful JavaScript rendering engine with 3D scene graph, DOM and WebGL rendering, physics, and animations",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
-    "tape": "tap-closer | smokestack -b firefox | tap-spec",
-    "test-new": "node ./scripts/test.js ./core/**/*.spec.js",
-    "test-components": "browserify components/test/*.js | npm run tape",
-    "test-core": "npm run test-new",
-    "test-dom-renderables": "browserify dom-renderables/test/*.js | npm run tape",
-    "test-dom-renderers": "browserify dom-renderers/test/*.js | npm run tape",
-    "test-render-loops": "browserify render-loops/test/*.js | npm run tape",
-    "test-math": "browserify math/test/*.js | npm run tape",
-    "test-physics": "browserify physics/test/*.js physics/test/*/*.js | npm run tape",
-    "test-polyfills": "browserify polyfills/test/*.js | npm run tape",
-    "test-renderers": "browserify renderers/test/*.js | npm run tape",
-    "test-transitions": "browserify transitions/test/*.js | npm run tape",
-    "test-utilities": "browserify utilities/test/*.js | npm run tape",
-    "test-webgl-geometries": "browserify webgl-geometries/test/*.js | npm run tape",
-    "test-webgl-materials": "browserify webgl-materials/test/*.js | npm run tape",
-    "test-webgl-renderables": "browserify webgl-renderables/test/*.js | npm run tape",
-    "test-webgl-renderers": "browserify webgl-renderers/test/*.js | npm run tape",
-    "test": "EXIT_STATUS=0; npm run test-components || EXIT_STATUS=$?; npm run test-core || EXIT_STATUS=$?; npm run test-dom-renderables || EXIT_STATUS=$?; npm run test-dom-renderers || EXIT_STATUS=$?; npm run test-render-loops || EXIT_STATUS=$?; npm run test-math || EXIT_STATUS=$?; npm run test-physics || EXIT_STATUS=$?; npm run test-polyfills || EXIT_STATUS=$?; npm run test-renderers || EXIT_STATUS=$?; npm run test-transitions || EXIT_STATUS=$?; npm run test-utilities || EXIT_STATUS=$?; npm run test-webgl-geometries || EXIT_STATUS=$?; npm run test-webgl-materials || EXIT_STATUS=$?; npm run test-webgl-renderables || EXIT_STATUS=$?; npm run test-webgl-renderers; exit $EXIT_STATUS",
-    "check-jsdoc": "eslint --reset --no-eslintrc --rule 'valid-jsdoc: 2' --ignore-path .gitignore .",
-    "lint": "eslint --ignore-path .gitignore .",
-    "build": "npm run build-debug && npm run build-min",
-    "build-debug": "browserify index.js -d --standalone famous > dist/famous.js",
-    "build-min": "browserify index.js --standalone famous | uglifyjs --screw-ie8 -m -c dead_code,sequences,conditionals,booleans,unused,if_return,join_vars,drop_debugger > dist/famous.min.js"
+    "dev": "vite",
+    "build": "vite build",
+    "build:min": "vite build --minify",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md,yml,yaml}\"",
+    "prepare": "husky",
+    "legacy:tape": "tap-closer | smokestack -b firefox | tap-spec",
+    "legacy:test-new": "node ./scripts/test.js ./core/**/*.spec.js",
+    "legacy:test-components": "browserify components/test/*.js | npm run legacy:tape",
+    "legacy:test-core": "npm run legacy:test-new",
+    "legacy:test-dom-renderables": "browserify dom-renderables/test/*.js | npm run legacy:tape",
+    "legacy:test-dom-renderers": "browserify dom-renderers/test/*.js | npm run legacy:tape",
+    "legacy:test-render-loops": "browserify render-loops/test/*.js | npm run legacy:tape",
+    "legacy:test-math": "browserify math/test/*.js | npm run legacy:tape",
+    "legacy:test-physics": "browserify physics/test/*.js physics/test/*/*.js | npm run legacy:tape",
+    "legacy:test-polyfills": "browserify polyfills/test/*.js | npm run legacy:tape",
+    "legacy:test-renderers": "browserify renderers/test/*.js | npm run legacy:tape",
+    "legacy:test-transitions": "browserify transitions/test/*.js | npm run legacy:tape",
+    "legacy:test-utilities": "browserify utilities/test/*.js | npm run legacy:tape",
+    "legacy:test-webgl-geometries": "browserify webgl-geometries/test/*.js | npm run legacy:tape",
+    "legacy:test-webgl-materials": "browserify webgl-materials/test/*.js | npm run legacy:tape",
+    "legacy:test-webgl-renderables": "browserify webgl-renderables/test/*.js | npm run legacy:tape",
+    "legacy:test-webgl-renderers": "browserify webgl-renderers/test/*.js | npm run legacy:tape",
+    "legacy:test": "EXIT_STATUS=0; npm run legacy:test-components || EXIT_STATUS=$?; npm run legacy:test-core || EXIT_STATUS=$?; npm run legacy:test-dom-renderables || EXIT_STATUS=$?; npm run legacy:test-dom-renderers || EXIT_STATUS=$?; npm run legacy:test-render-loops || EXIT_STATUS=$?; npm run legacy:test-math || EXIT_STATUS=$?; npm run legacy:test-physics || EXIT_STATUS=$?; npm run legacy:test-polyfills || EXIT_STATUS=$?; npm run legacy:test-renderers || EXIT_STATUS=$?; npm run legacy:test-transitions || EXIT_STATUS=$?; npm run legacy:test-utilities || EXIT_STATUS=$?; npm run legacy:test-webgl-geometries || EXIT_STATUS=$?; npm run legacy:test-webgl-materials || EXIT_STATUS=$?; npm run legacy:test-webgl-renderables || EXIT_STATUS=$?; npm run legacy:test-webgl-renderers; exit $EXIT_STATUS",
+    "legacy:check-jsdoc": "eslint --reset --no-eslintrc --rule 'valid-jsdoc: 2' --ignore-path .gitignore .",
+    "legacy:lint": "eslint --ignore-path .gitignore .",
+    "legacy:build": "npm run legacy:build-debug && npm run legacy:build-min",
+    "legacy:build-debug": "browserify index.js -d --standalone famous > dist/famous.js",
+    "legacy:build-min": "browserify index.js --standalone famous | uglifyjs --screw-ie8 -m -c dead_code,sequences,conditionals,booleans,unused,if_return,join_vars,drop_debugger > dist/famous.min.js"
   },
   "repository": {
     "type": "git",
@@ -35,25 +52,47 @@
   "author": "Famous",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@vitejs/plugin-legacy": "^7.2.1",
+    "@vitest/ui": "^4.0.10",
     "browserify": "^10.2.1",
     "colors": "^1.1.0",
-    "eslint": "^0.21.2",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "glob": "^5.0.10",
+    "globals": "^16.5.0",
+    "happy-dom": "^20.0.10",
+    "husky": "^9.1.7",
     "istanbul": "^0.3.15",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.6.2",
     "rewire": "^2.3.3",
     "sinon": "^1.14.1",
     "smokestack": "^3.2.2",
     "tap-closer": "^1.0.0",
-    "tape": "^4.0.0",
     "tap-spec": "^4.0.0",
-    "uglify-js": "^2.4.17"
+    "tape": "^4.0.0",
+    "uglify-js": "^2.4.17",
+    "vite": "^7.2.2",
+    "vite-plugin-glsl": "^1.5.4",
+    "vitest": "^4.0.10"
   },
   "dependencies": {
-    "glslify": "^2.0.0"
+    "glslify": "^7.1.1"
   },
   "browserify": {
     "transform": [
       "glslify"
+    ]
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
     ]
   }
 }
