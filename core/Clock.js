@@ -22,17 +22,14 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
 /**
  * Equivalent of an Engine in the Worker Thread. Used to synchronize and manage
  * time across different Threads.
  *
- * @class  Clock
- * @constructor
  * @private
  */
-function Clock () {
+class Clock {
+  constructor() {
     this._time = 0;
     this._frame = 0;
     this._timerQueue = [];
@@ -40,169 +37,141 @@ function Clock () {
 
     this._scale = 1;
     this._scaledTime = this._time;
+  }
+
+  /**
+   * Sets the scale at which the clock time is passing.
+   * Useful for slow-motion or fast-forward effects.
+   *
+   * `1` means no time scaling ("realtime"),
+   * `2` means the clock time is passing twice as fast,
+   * `0.5` means the clock time is passing two times slower than the "actual"
+   * time at which the Clock is being updated via `.step`.
+   *
+   * Initially the clock time is not being scaled (factor `1`).
+   *
+   * @param {number} scale - The scale at which the clock time is passing
+   * @returns {Clock} this instance for chaining
+   */
+  setScale(scale) {
+    this._scale = scale;
+    return this;
+  }
+
+  /**
+   * Gets the current time scale.
+   *
+   * @returns {number} The scale at which the clock time is passing
+   */
+  getScale() {
+    return this._scale;
+  }
+
+  /**
+   * Updates the internal clock time.
+   *
+   * @param {number} time - High resolution timestamp used for invoking the `update` method on all registered objects
+   * @returns {Clock} this instance for chaining
+   */
+  step(time) {
+    this._frame++;
+
+    this._scaledTime = this._scaledTime + (time - this._time) * this._scale;
+    this._time = time;
+
+    for (let i = 0; i < this._timerQueue.length; i++) {
+      if (this._timerQueue[i](this._scaledTime)) {
+        this._timerQueue.splice(i, 1);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Returns the internal clock time.
+   *
+   * @returns {number} High resolution timestamp
+   */
+  now() {
+    return this._scaledTime;
+  }
+
+  /**
+   * Returns the number of frames elapsed so far.
+   *
+   * @returns {number} Number of frames
+   */
+  getFrame() {
+    return this._frame;
+  }
+
+  /**
+   * Wraps a function to be invoked after a certain amount of time.
+   * After a set duration has passed, it executes the function and
+   * removes it as a listener to 'prerender'.
+   *
+   * @param {Function} callback - Function to be run after a specified duration
+   * @param {number} delay - Milliseconds from now to execute the function
+   * @param {...*} args - Additional arguments to pass to callback
+   * @returns {Function} Timer function used for Clock#clearTimer
+   */
+  setTimeout(callback, delay, ...args) {
+    const startedAt = this._time;
+    const timer = (time) => {
+      if (time - startedAt >= delay) {
+        callback.apply(null, args);
+        return true;
+      }
+      return false;
+    };
+    this._timerQueue.push(timer);
+    return timer;
+  }
+
+  /**
+   * Wraps a function to be invoked after a certain amount of time.
+   * After a set duration has passed, it executes the function and
+   * resets the execution time.
+   *
+   * @param {Function} callback - Function to be run after a specified duration
+   * @param {number} delay - Interval to execute function in milliseconds
+   * @param {...*} args - Additional arguments to pass to callback
+   * @returns {Function} Timer function used for Clock#clearTimer
+   */
+  setInterval(callback, delay, ...args) {
+    let startedAt = this._time;
+    const timer = (time) => {
+      if (time - startedAt >= delay) {
+        callback.apply(null, args);
+        startedAt = time;
+      }
+      return false;
+    };
+    this._timerQueue.push(timer);
+    return timer;
+  }
+
+  /**
+   * Removes previously via `Clock#setTimeout` or `Clock#setInterval`
+   * registered callback function.
+   *
+   * @param {Function} timer - Previously by `Clock#setTimeout` or `Clock#setInterval` returned callback function
+   * @returns {Clock} this instance for chaining
+   */
+  clearTimer(timer) {
+    const index = this._timerQueue.indexOf(timer);
+    if (index !== -1) {
+      this._timerQueue.splice(index, 1);
+    }
+    return this;
+  }
 }
 
 /**
- * Sets the scale at which the clock time is passing.
- * Useful for slow-motion or fast-forward effects.
+ * Alias for Clock#now (deprecated).
  *
- * `1` means no time scaling ("realtime"),
- * `2` means the clock time is passing twice as fast,
- * `0.5` means the clock time is passing two times slower than the "actual"
- * time at which the Clock is being updated via `.step`.
- *
- * Initally the clock time is not being scaled (factor `1`).
- *
- * @method  setScale
- * @chainable
- *
- * @param {Number} scale    The scale at which the clock time is passing.
- *
- * @return {Clock} this
- */
-Clock.prototype.setScale = function setScale (scale) {
-    this._scale = scale;
-    return this;
-};
-
-/**
- * @method  getScale
- *
- * @return {Number} scale    The scale at which the clock time is passing.
- */
-Clock.prototype.getScale = function getScale () {
-    return this._scale;
-};
-
-/**
- * Updates the internal clock time.
- *
- * @method  step
- * @chainable
- *
- * @param  {Number} time high resolution timestamp used for invoking the
- *                       `update` method on all registered objects
- * @return {Clock}       this
- */
-Clock.prototype.step = function step (time) {
-    this._frame++;
-
-    this._scaledTime = this._scaledTime + (time - this._time)*this._scale;
-    this._time = time;
-
-    for (var i = 0; i < this._timerQueue.length; i++) {
-        if (this._timerQueue[i](this._scaledTime)) {
-            this._timerQueue.splice(i, 1);
-        }
-    }
-    return this;
-};
-
-/**
- * Returns the internal clock time.
- *
- * @method  now
- *
- * @return  {Number} time high resolution timestamp used for invoking the
- *                       `update` method on all registered objects
- */
-Clock.prototype.now = function now () {
-    return this._scaledTime;
-};
-
-/**
- * Returns the internal clock time.
- *
- * @method  getTime
  * @deprecated Use #now instead
- *
- * @return  {Number} time high resolution timestamp used for invoking the
- *                       `update` method on all registered objects
  */
 Clock.prototype.getTime = Clock.prototype.now;
 
-/**
- * Returns the number of frames elapsed so far.
- *
- * @method getFrame
- *
- * @return {Number} frames
- */
-Clock.prototype.getFrame = function getFrame () {
-    return this._frame;
-};
-
-/**
- * Wraps a function to be invoked after a certain amount of time.
- * After a set duration has passed, it executes the function and
- * removes it as a listener to 'prerender'.
- *
- * @method setTimeout
- *
- * @param {Function} callback function to be run after a specified duration
- * @param {Number} delay milliseconds from now to execute the function
- *
- * @return {Function} timer function used for Clock#clearTimer
- */
-Clock.prototype.setTimeout = function (callback, delay) {
-    var params = Array.prototype.slice.call(arguments, 2);
-    var startedAt = this._time;
-    var timer = function(time) {
-        if (time - startedAt >= delay) {
-            callback.apply(null, params);
-            return true;
-        }
-        return false;
-    };
-    this._timerQueue.push(timer);
-    return timer;
-};
-
-
-/**
- * Wraps a function to be invoked after a certain amount of time.
- *  After a set duration has passed, it executes the function and
- *  resets the execution time.
- *
- * @method setInterval
- *
- * @param {Function} callback function to be run after a specified duration
- * @param {Number} delay interval to execute function in milliseconds
- *
- * @return {Function} timer function used for Clock#clearTimer
- */
-Clock.prototype.setInterval = function setInterval(callback, delay) {
-    var params = Array.prototype.slice.call(arguments, 2);
-    var startedAt = this._time;
-    var timer = function(time) {
-        if (time - startedAt >= delay) {
-            callback.apply(null, params);
-            startedAt = time;
-        }
-        return false;
-    };
-    this._timerQueue.push(timer);
-    return timer;
-};
-
-/**
- * Removes previously via `Clock#setTimeout` or `Clock#setInterval`
- * registered callback function
- *
- * @method clearTimer
- * @chainable
- *
- * @param  {Function} timer  previously by `Clock#setTimeout` or
- *                              `Clock#setInterval` returned callback function
- * @return {Clock}              this
- */
-Clock.prototype.clearTimer = function (timer) {
-    var index = this._timerQueue.indexOf(timer);
-    if (index !== -1) {
-        this._timerQueue.splice(index, 1);
-    }
-    return this;
-};
-
 module.exports = Clock;
-

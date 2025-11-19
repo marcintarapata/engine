@@ -22,83 +22,83 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+let _ID = 0;
 
-var _ID = 0;
 /**
  * Abstract force manager to apply forces to targets.
  *
  * @class Force
  * @virtual
- * @param {Particle[]} targets The targets of the force.
- * @param {Object} options The options hash.
+ * @param {Particle[]} targets - The targets of the force.
+ * @param {Object} options - The options hash.
  */
-function Force(targets, options) {
+class Force {
+  constructor(targets, options) {
     if (targets) {
-        if (targets instanceof Array) this.targets = targets;
-        else this.targets = [targets];
-    }
-    else this.targets = [];
+      if (targets instanceof Array) this.targets = targets;
+      else this.targets = [targets];
+    } else this.targets = [];
 
     options = options || {};
     this.setOptions(options);
 
     this._ID = _ID++;
-}
+  }
 
-/**
- * Decorates the Force with the options object.
- *
- * @method
- * @param {Object} options The options hash.
- * @return {undefined} undefined
- */
-Force.prototype.setOptions = function setOptions(options) {
-    for (var key in options) this[key] = options[key];
+  /**
+   * Decorates the Force with the options object.
+   *
+   * @method setOptions
+   * @param {Object} options - The options hash.
+   * @returns {void}
+   */
+  setOptions(options) {
+    for (const key in options) this[key] = options[key];
     this.init(options);
-};
+  }
 
-/**
- * Add a target or targets to the Force.
- *
- * @method
- * @param {Particle} target The body to begin targetting.
- * @return {undefined} undefined
- */
-Force.prototype.addTarget = function addTarget(target) {
+  /**
+   * Add a target or targets to the Force.
+   *
+   * @method addTarget
+   * @param {Particle} target - The body to begin targeting.
+   * @returns {void}
+   */
+  addTarget(target) {
     this.targets.push(target);
-};
+  }
 
-/**
- * Remove a target or targets from the Force.
- *
- * @method
- * @param {Particle} target The body to stop targetting.
- * @return {undefined} undefined
- */
-Force.prototype.removeTarget = function removeTarget(target) {
-    var index = this.targets.indexOf(target);
+  /**
+   * Remove a target or targets from the Force.
+   *
+   * @method removeTarget
+   * @param {Particle} target - The body to stop targeting.
+   * @returns {void}
+   */
+  removeTarget(target) {
+    const index = this.targets.indexOf(target);
     if (index < 0) return;
     this.targets.splice(index, 1);
-};
+  }
 
-/**
- * Method invoked upon instantiation and the setting of options.
- *
- * @method
- * @param {Object} options The options hash.
- * @return {undefined} undefined
- */
-Force.prototype.init = function init(options) {};
+  /**
+   * Method invoked upon instantiation and the setting of options.
+   *
+   * @method init
+   * @param {Object} options - The options hash.
+   * @returns {void}
+   */
+  init(options) {}
 
-/**
- * Apply forces on each target.
- *
- * @method
- * @param {Number} time The current time in the physics engine.
- * @param {Number} dt The physics engine frame delta.
- * @return {undefined} undefined
- */
-Force.prototype.update = function update(time, dt) {};
+  /**
+   * Apply forces on each target.
+   *
+   * @method update
+   * @param {number} time - The current time in the physics engine.
+   * @param {number} dt - The physics engine frame delta.
+   * @returns {void}
+   */
+  update(time, dt) {}
+}
 
 module.exports = Force;

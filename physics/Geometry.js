@@ -22,18 +22,12 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+const Vec3 = require('../math/Vec3');
+const Mat33 = require('../math/Mat33');
 
-var Vec3 = require('../math/Vec3');
-var Mat33 = require('../math/Mat33');
+const ObjectManager = require('../utilities/ObjectManager');
 
-var ObjectManager = require('../utilities/ObjectManager');
-ObjectManager.register('DynamicGeometry', DynamicGeometry);
-ObjectManager.register('DynamicGeometryFeature', DynamicGeometryFeature);
-var oMRequestDynamicGeometryFeature = ObjectManager.requestDynamicGeometryFeature;
-var oMFreeDynamicGeometryFeature = ObjectManager.freeDynamicGeometryFeature;
-
-var TRIPLE_REGISTER = new Vec3();
+const TRIPLE_REGISTER = new Vec3();
 
 /**
  * The so called triple product. Used to find a vector perpendicular to (v2 - v1) in the direction of v3.
@@ -41,13 +35,13 @@ var TRIPLE_REGISTER = new Vec3();
  *
  * @method
  * @private
- * @param {Vec3} v1 The first Vec3.
- * @param {Vec3} v2 The second Vec3.
- * @param {Vec3} v3 The third Vec3.
- * @return {Vec3} The result of the triple product.
+ * @param {Vec3} v1 - The first Vec3.
+ * @param {Vec3} v2 - The second Vec3.
+ * @param {Vec3} v3 - The third Vec3.
+ * @returns {Vec3} The result of the triple product.
  */
 function tripleProduct(v1, v2, v3) {
-    var v = TRIPLE_REGISTER;
+    const v = TRIPLE_REGISTER;
 
     Vec3.cross(v1, v2, v);
     Vec3.cross(v, v3, v);
@@ -60,17 +54,17 @@ function tripleProduct(v1, v2, v3) {
  *
  * @method
  * @private
- * @param {Vec3[]} vertices The reference set of Vec3's.
- * @param {Vec3} direction The direction to compare against.
- * @return {Object} The vertex and its index in the vertex array.
+ * @param {Vec3[]} vertices - The reference set of Vec3's.
+ * @param {Vec3} direction - The direction to compare against.
+ * @returns {Object} The vertex and its index in the vertex array.
  */
 function _hullSupport(vertices, direction) {
-    var furthest;
-    var max = -Infinity;
-    var dot;
-    var vertex;
-    var index;
-    for (var i = 0; i < vertices.length; i++) {
+    let furthest;
+    let max = -Infinity;
+    let dot;
+    let vertex;
+    let index;
+    for (let i = 0; i < vertices.length; i++) {
         vertex = vertices[i];
         dot = Vec3.dot(vertex, direction);
         if (dot > max) {
@@ -86,176 +80,349 @@ function _hullSupport(vertices, direction) {
     };
 }
 
-var VEC_REGISTER = new Vec3();
-var POINTCHECK_REGISTER = new Vec3();
-var AO_REGISTER = new Vec3();
-var AB_REGISTER = new Vec3();
-var AC_REGISTER = new Vec3();
-var AD_REGISTER = new Vec3();
-var BC_REGISTER = new Vec3();
-var BD_REGISTER = new Vec3();
+const VEC_REGISTER = new Vec3();
+const POINTCHECK_REGISTER = new Vec3();
+const AO_REGISTER = new Vec3();
+const AB_REGISTER = new Vec3();
+const AC_REGISTER = new Vec3();
+const AD_REGISTER = new Vec3();
+const BC_REGISTER = new Vec3();
+const BD_REGISTER = new Vec3();
 
 /**
  * Used internally to represent polyhedral facet information.
  *
  * @class DynamicGeometryFeature
- * @param {Number} distance The distance of the feature from the origin.
- * @param {Vec3} normal The Vec3 orthogonal to the feature, pointing out of the geometry.
- * @param {Number[]} vertexIndices The indices of the vertices which compose the feature.
+ * @param {Number} distance - The distance of the feature from the origin.
+ * @param {Vec3} normal - The Vec3 orthogonal to the feature, pointing out of the geometry.
+ * @param {Number[]} vertexIndices - The indices of the vertices which compose the feature.
  */
-function DynamicGeometryFeature(distance, normal, vertexIndices) {
-    this.distance = distance;
-    this.normal = normal;
-    this.vertexIndices = vertexIndices;
+class DynamicGeometryFeature {
+    constructor(distance, normal, vertexIndices) {
+        this.distance = distance;
+        this.normal = normal;
+        this.vertexIndices = vertexIndices;
+    }
+
+    /**
+     * Used by ObjectManager to reset objects.
+     *
+     * @method
+     * @param {Number} distance - Distance from the origin.
+     * @param {Vec3} normal - Vec3 normal to the feature.
+     * @param {Number[]} vertexIndices - Indices of the vertices which compose the feature.
+     * @returns {DynamicGeometryFeature} this
+     */
+    reset(distance, normal, vertexIndices) {
+        this.distance = distance;
+        this.normal = normal;
+        this.vertexIndices = vertexIndices;
+
+        return this;
+    }
 }
 
-/**
- * Used by ObjectManager to reset objects.
- *
- * @method
- * @param {Number} distance Distance from the origin.
- * @param {Vec3} normal Vec3 normal to the feature.
- * @param {Number[]} vertexIndices Indices of the vertices which compose the feature.
- * @return {DynamicGeometryFeature} this
- */
-DynamicGeometryFeature.prototype.reset = function(distance, normal, vertexIndices) {
-    this.distance = distance;
-    this.normal = normal;
-    this.vertexIndices = vertexIndices;
-
-    return this;
-};
+ObjectManager.register('DynamicGeometryFeature', DynamicGeometryFeature);
 
 /**
  * Abstract object representing a growing polyhedron. Used in ConvexHull and in GJK+EPA collision detection.
  *
  * @class DynamicGeometry
  */
-function DynamicGeometry() {
-    this.vertices = [];
-    this.numVertices = 0;
-    this.features = [];
-    this.numFeatures = 0;
-    this.lastVertexIndex = 0;
+class DynamicGeometry {
+    constructor() {
+        this.vertices = [];
+        this.numVertices = 0;
+        this.features = [];
+        this.numFeatures = 0;
+        this.lastVertexIndex = 0;
 
-    this._IDPool = {
-        vertices: [],
-        features: []
-    };
-}
+        this._IDPool = {
+            vertices: [],
+            features: []
+        };
+    }
 
-/**
- * Used by ObjectManager to reset objects.
- *
- * @method
- * @return {DynamicGeometry} this
- */
-DynamicGeometry.prototype.reset = function reset() {
-    this.vertices = [];
-    this.numVertices = 0;
-    this.features = [];
-    this.numFeatures = 0;
-    this.lastVertexIndex = 0;
+    /**
+     * Used by ObjectManager to reset objects.
+     *
+     * @method
+     * @returns {DynamicGeometry} this
+     */
+    reset() {
+        this.vertices = [];
+        this.numVertices = 0;
+        this.features = [];
+        this.numFeatures = 0;
+        this.lastVertexIndex = 0;
 
-    this._IDPool = {
-        vertices: [],
-        features: []
-    };
+        this._IDPool = {
+            vertices: [],
+            features: []
+        };
 
-    return this;
-};
+        return this;
+    }
 
-/**
- * Add a vertex to the polyhedron.
- *
- * @method
- * @param {Object} vertexObj Object returned by the support function.
- * @return {undefined} undefined
- */
-DynamicGeometry.prototype.addVertex = function(vertexObj) {
-    var index = this._IDPool.vertices.length ? this._IDPool.vertices.pop() : this.vertices.length;
-    this.vertices[index] = vertexObj;
-    this.lastVertexIndex = index;
-    this.numVertices++;
-};
+    /**
+     * Add a vertex to the polyhedron.
+     *
+     * @method
+     * @param {Object} vertexObj - Object returned by the support function.
+     * @returns {undefined} undefined
+     */
+    addVertex(vertexObj) {
+        const index = this._IDPool.vertices.length ? this._IDPool.vertices.pop() : this.vertices.length;
+        this.vertices[index] = vertexObj;
+        this.lastVertexIndex = index;
+        this.numVertices++;
+    }
 
-/**
- * Remove a vertex and push its location in the vertex array to the IDPool for later use.
- *
- * @method
- * @param {Number} index Index of the vertex to remove.
- * @return {Object} vertex The vertex object.
- */
-DynamicGeometry.prototype.removeVertex = function(index) {
-    var vertex = this.vertices[index];
-    this.vertices[index] = null;
-    this._IDPool.vertices.push(index);
-    this.numVertices--;
+    /**
+     * Remove a vertex and push its location in the vertex array to the IDPool for later use.
+     *
+     * @method
+     * @param {Number} index - Index of the vertex to remove.
+     * @returns {Object} vertex The vertex object.
+     */
+    removeVertex(index) {
+        const vertex = this.vertices[index];
+        this.vertices[index] = null;
+        this._IDPool.vertices.push(index);
+        this.numVertices--;
 
-    return vertex;
-};
+        return vertex;
+    }
 
-/**
- * Add a feature (facet) to the polyhedron. Used internally in the reshaping process.
- *
- * @method
- * @param {Number} distance The distance of the feature from the origin.
- * @param {Vec3} normal The facet normal.
- * @param {Number[]} vertexIndices The indices of the vertices which compose the feature.
- * @return {undefined} undefined
- */
-DynamicGeometry.prototype.addFeature = function(distance, normal, vertexIndices) {
-    var index = this._IDPool.features.length ? this._IDPool.features.pop() : this.features.length;
-    this.features[index] = oMRequestDynamicGeometryFeature().reset(distance, normal, vertexIndices);
-    this.numFeatures++;
-};
+    /**
+     * Add a feature (facet) to the polyhedron. Used internally in the reshaping process.
+     *
+     * @method
+     * @param {Number} distance - The distance of the feature from the origin.
+     * @param {Vec3} normal - The facet normal.
+     * @param {Number[]} vertexIndices - The indices of the vertices which compose the feature.
+     * @returns {undefined} undefined
+     */
+    addFeature(distance, normal, vertexIndices) {
+        const index = this._IDPool.features.length ? this._IDPool.features.pop() : this.features.length;
+        this.features[index] = ObjectManager.requestDynamicGeometryFeature().reset(distance, normal, vertexIndices);
+        this.numFeatures++;
+    }
 
-/**
- * Remove a feature and push its location in the feature array to the IDPool for later use.
- *
- * @method
- * @param {Number} index Index of the feature to remove.
- * @return {undefined} undefined
- */
-DynamicGeometry.prototype.removeFeature = function(index) {
-    var feature = this.features[index];
-    this.features[index] = null;
-    this._IDPool.features.push(index);
-    this.numFeatures--;
+    /**
+     * Remove a feature and push its location in the feature array to the IDPool for later use.
+     *
+     * @method
+     * @param {Number} index - Index of the feature to remove.
+     * @returns {undefined} undefined
+     */
+    removeFeature(index) {
+        const feature = this.features[index];
+        this.features[index] = null;
+        this._IDPool.features.push(index);
+        this.numFeatures--;
 
-    oMFreeDynamicGeometryFeature(feature);
-};
+        ObjectManager.freeDynamicGeometryFeature(feature);
+    }
 
-/**
- * Retrieve the last vertex object added to the geometry.
- *
- * @method
- * @return {Object} The last vertex added.
- */
-DynamicGeometry.prototype.getLastVertex = function() {
-    return this.vertices[this.lastVertexIndex];
-};
+    /**
+     * Retrieve the last vertex object added to the geometry.
+     *
+     * @method
+     * @returns {Object} The last vertex added.
+     */
+    getLastVertex() {
+        return this.vertices[this.lastVertexIndex];
+    }
 
-/**
- * Return the feature closest to the origin.
- *
- * @method
- * @return {DynamicGeometryFeature} The closest feature.
- */
-DynamicGeometry.prototype.getFeatureClosestToOrigin = function() {
-    var min = Infinity;
-    var closest = null;
-    var features = this.features;
-    for (var i = 0, len = features.length; i < len; i++) {
-        var feature = features[i];
-        if (!feature) continue;
-        if (feature.distance < min) {
-            min = feature.distance;
-            closest = feature;
+    /**
+     * Return the feature closest to the origin.
+     *
+     * @method
+     * @returns {DynamicGeometryFeature} The closest feature.
+     */
+    getFeatureClosestToOrigin() {
+        let min = Infinity;
+        let closest = null;
+        const features = this.features;
+        for (let i = 0, len = features.length; i < len; i++) {
+            const feature = features[i];
+            if (!feature) continue;
+            if (feature.distance < min) {
+                min = feature.distance;
+                closest = feature;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Based on the last (exterior) point added to the polyhedron, removes features as necessary and redetermines
+     * its (convex) shape to include the new point by adding triangle features. Uses referencePoint, a point on the shape's
+     * interior, to ensure feature normals point outward, else takes referencePoint to be the origin.
+     *
+     * @method
+     * @param {Vec3} referencePoint - Point known to be in the interior, used to orient feature normals.
+     * @returns {undefined} undefined
+     */
+    reshape(referencePoint) {
+        const vertices = this.vertices;
+        const point = this.getLastVertex().vertex;
+        const features = this.features;
+        let vertexOnFeature;
+        let featureVertices;
+
+        let i, j, len;
+
+        // The removal of features creates a hole in the polyhedron -- frontierEdges maintains the edges
+        // of this hole, each of which will form one edge of a new feature to be created
+        const frontierEdges = [];
+
+        for (i = 0, len = features.length; i < len; i++) {
+            if (!features[i]) continue;
+            featureVertices = features[i].vertexIndices;
+            vertexOnFeature = vertices[featureVertices[0]].vertex;
+            // If point is 'above' the feature, remove that feature, and check to add its edges to the frontier.
+            if (Vec3.dot(features[i].normal, Vec3.subtract(point, vertexOnFeature, POINTCHECK_REGISTER)) > -0.001) {
+                _validateEdge(vertices, frontierEdges, featureVertices[0], featureVertices[1]);
+                _validateEdge(vertices, frontierEdges, featureVertices[1], featureVertices[2]);
+                _validateEdge(vertices, frontierEdges, featureVertices[2], featureVertices[0]);
+                this.removeFeature(i);
+            }
+        }
+
+        const A = point;
+        const a = this.lastVertexIndex;
+        for (j = 0, len = frontierEdges.length; j < len; j++) {
+            if (!frontierEdges[j]) continue;
+            const b = frontierEdges[j][0];
+            const c = frontierEdges[j][1];
+            const B = vertices[b].vertex;
+            const C = vertices[c].vertex;
+
+            const AB = Vec3.subtract(B, A, AB_REGISTER);
+            const AC = Vec3.subtract(C, A, AC_REGISTER);
+            const ABC = Vec3.cross(AB, AC, new Vec3());
+            ABC.normalize();
+
+            if (!referencePoint) {
+                let distance = Vec3.dot(ABC, A);
+                if (distance < 0) {
+                    ABC.invert();
+                    distance *= -1;
+                }
+                this.addFeature(distance, ABC, [a, b, c]);
+            }
+            else {
+                const reference = Vec3.subtract(referencePoint, A, VEC_REGISTER);
+                if (Vec3.dot(ABC, reference) > -0.001) ABC.invert();
+                this.addFeature(null, ABC, [a, b, c]);
+            }
         }
     }
-    return closest;
-};
+
+    /**
+     * Checks if the Simplex instance contains the origin, returns true or false.
+     * If false, removes a point and, as a side effect, changes input direction to be both
+     * orthogonal to the current working simplex and point toward the origin.
+     * Calls callback on the removed point.
+     *
+     * @method
+     * @param {Vec3} direction - Vector used to store the new search direction.
+     * @param {Function} callback - Function invoked with the removed vertex, used e.g. to free the vertex object
+     * in the object manager.
+     * @returns {Boolean} The result of the containment check.
+     */
+    simplexContainsOrigin(direction, callback) {
+        const numVertices = this.vertices.length;
+
+        const a = this.lastVertexIndex;
+        let b = a - 1;
+        let c = a - 2;
+        let d = a - 3;
+
+        b = b < 0 ? b + numVertices : b;
+        c = c < 0 ? c + numVertices : c;
+        d = d < 0 ? d + numVertices : d;
+
+        const A = this.vertices[a].vertex;
+        const B = this.vertices[b].vertex;
+        const C = this.vertices[c].vertex;
+        const D = this.vertices[d].vertex;
+
+        const AO = Vec3.scale(A, -1, AO_REGISTER);
+        const AB = Vec3.subtract(B, A, AB_REGISTER);
+        let AC, AD, BC, BD;
+        let ABC, ACD, ABD, BCD;
+        let distanceABC, distanceACD, distanceABD, distanceBCD;
+
+        let vertexToRemove;
+
+        if (numVertices === 4) {
+            // Tetrahedron
+            AC = Vec3.subtract(C, A, AC_REGISTER);
+            AD = Vec3.subtract(D, A, AD_REGISTER);
+
+            ABC = Vec3.cross(AB, AC, new Vec3());
+            ACD = Vec3.cross(AC, AD, new Vec3());
+            ABD = Vec3.cross(AB, AD, new Vec3());
+            ABC.normalize();
+            ACD.normalize();
+            ABD.normalize();
+            if (Vec3.dot(ABC, AD) > 0) ABC.invert();
+            if (Vec3.dot(ACD, AB) > 0) ACD.invert();
+            if (Vec3.dot(ABD, AC) > 0) ABD.invert();
+            // Don't need to check BCD because we would have just checked that in the previous iteration
+            // -- we added A to the BCD triangle because A was in the direction of the origin.
+
+            distanceABC = Vec3.dot(ABC, AO);
+            distanceACD = Vec3.dot(ACD, AO);
+            distanceABD = Vec3.dot(ABD, AO);
+
+            // Norms point away from origin -> origin is inside tetrahedron
+            if (distanceABC < 0.001 && distanceABD < 0.001 && distanceACD < 0.001) {
+                BC = Vec3.subtract(C, B, BC_REGISTER);
+                BD = Vec3.subtract(D, B, BD_REGISTER);
+                BCD = Vec3.cross(BC, BD, new Vec3());
+                BCD.normalize();
+                if (Vec3.dot(BCD, AB) <= 0) BCD.invert();
+                distanceBCD = -1 * Vec3.dot(BCD,B);
+                // Prep features for EPA
+                this.addFeature(-distanceABC, ABC, [a,b,c]);
+                this.addFeature(-distanceACD, ACD, [a,c,d]);
+                this.addFeature(-distanceABD, ABD, [a,d,b]);
+                this.addFeature(-distanceBCD, BCD, [b,c,d]);
+                return true;
+            }
+            else if (distanceABC >= 0.001) {
+                vertexToRemove = this.removeVertex(d);
+                direction.copy(ABC);
+            }
+            else if (distanceACD >= 0.001) {
+                vertexToRemove = this.removeVertex(b);
+                direction.copy(ACD);
+            }
+            else {
+                vertexToRemove = this.removeVertex(c);
+                direction.copy(ABD);
+            }
+        }
+        else if (numVertices === 3) {
+            // Triangle
+            AC = Vec3.subtract(C, A, AC_REGISTER);
+            Vec3.cross(AB, AC, direction);
+            if (Vec3.dot(direction, AO) <= 0) direction.invert();
+        }
+        else {
+            // Line
+            direction.copy(tripleProduct(AB, AO, AB));
+        }
+        if (vertexToRemove && callback) callback(vertexToRemove);
+        return false;
+    }
+}
+
+ObjectManager.register('DynamicGeometry', DynamicGeometry);
 
 /**
  * Adds edge if not already on the frontier, removes if the edge or its reverse are on the frontier.
@@ -263,20 +430,20 @@ DynamicGeometry.prototype.getFeatureClosestToOrigin = function() {
  *
  * @method
  * @private
- * @param {Object[]} vertices Vec3 reference array.
- * @param {Array.<Number[]>} frontier Current edges potentially separating the features to remove from the persistant shape.
- * @param {Number} start The index of the starting Vec3 on the edge.
- * @param {Number} end The index of the culminating Vec3.
- * @return {undefined} undefined
+ * @param {Object[]} vertices - Vec3 reference array.
+ * @param {Array.<Number[]>} frontier - Current edges potentially separating the features to remove from the persistant shape.
+ * @param {Number} start - The index of the starting Vec3 on the edge.
+ * @param {Number} end - The index of the culminating Vec3.
+ * @returns {undefined} undefined
  */
 function _validateEdge(vertices, frontier, start, end) {
-    var e0 = vertices[start].vertex;
-    var e1 = vertices[end].vertex;
-    for (var i = 0, len = frontier.length; i < len; i++) {
-        var edge = frontier[i];
+    const e0 = vertices[start].vertex;
+    const e1 = vertices[end].vertex;
+    for (let i = 0, len = frontier.length; i < len; i++) {
+        const edge = frontier[i];
         if (!edge) continue;
-        var v0 = vertices[edge[0]].vertex;
-        var v1 = vertices[edge[1]].vertex;
+        const v0 = vertices[edge[0]].vertex;
+        const v1 = vertices[edge[1]].vertex;
         if ((e0 === v0 && (e1 === v1)) || (e0 === v1 && (e1 === v0))) {
             frontier[i] = null;
             return;
@@ -286,249 +453,86 @@ function _validateEdge(vertices, frontier, start, end) {
 }
 
 /**
- * Based on the last (exterior) point added to the polyhedron, removes features as necessary and redetermines
- * its (convex) shape to include the new point by adding triangle features. Uses referencePoint, a point on the shape's
- * interior, to ensure feature normals point outward, else takes referencePoint to be the origin.
- *
- * @method
- * @param {Vec3} referencePoint Point known to be in the interior, used to orient feature normals.
- * @return {undefined} undefined
- */
-DynamicGeometry.prototype.reshape = function(referencePoint) {
-    var vertices = this.vertices;
-    var point = this.getLastVertex().vertex;
-    var features = this.features;
-    var vertexOnFeature;
-    var featureVertices;
-
-    var i, j, len;
-
-    // The removal of features creates a hole in the polyhedron -- frontierEdges maintains the edges
-    // of this hole, each of which will form one edge of a new feature to be created
-    var frontierEdges = [];
-
-    for (i = 0, len = features.length; i < len; i++) {
-        if (!features[i]) continue;
-        featureVertices = features[i].vertexIndices;
-        vertexOnFeature = vertices[featureVertices[0]].vertex;
-        // If point is 'above' the feature, remove that feature, and check to add its edges to the frontier.
-        if (Vec3.dot(features[i].normal, Vec3.subtract(point, vertexOnFeature, POINTCHECK_REGISTER)) > -0.001) {
-            _validateEdge(vertices, frontierEdges, featureVertices[0], featureVertices[1]);
-            _validateEdge(vertices, frontierEdges, featureVertices[1], featureVertices[2]);
-            _validateEdge(vertices, frontierEdges, featureVertices[2], featureVertices[0]);
-            this.removeFeature(i);
-        }
-    }
-
-    var A = point;
-    var a = this.lastVertexIndex;
-    for (j = 0, len = frontierEdges.length; j < len; j++) {
-        if (!frontierEdges[j]) continue;
-        var b = frontierEdges[j][0];
-        var c = frontierEdges[j][1];
-        var B = vertices[b].vertex;
-        var C = vertices[c].vertex;
-
-        var AB = Vec3.subtract(B, A, AB_REGISTER);
-        var AC = Vec3.subtract(C, A, AC_REGISTER);
-        var ABC = Vec3.cross(AB, AC, new Vec3());
-        ABC.normalize();
-
-        if (!referencePoint) {
-            var distance = Vec3.dot(ABC, A);
-            if (distance < 0) {
-                ABC.invert();
-                distance *= -1;
-            }
-            this.addFeature(distance, ABC, [a, b, c]);
-        }
-        else {
-            var reference = Vec3.subtract(referencePoint, A, VEC_REGISTER);
-            if (Vec3.dot(ABC, reference) > -0.001) ABC.invert();
-            this.addFeature(null, ABC, [a, b, c]);
-        }
-    }
-};
-
-/**
- * Checks if the Simplex instance contains the origin, returns true or false.
- * If false, removes a point and, as a side effect, changes input direction to be both
- * orthogonal to the current working simplex and point toward the origin.
- * Calls callback on the removed point.
- *
- * @method
- * @param {Vec3} direction Vector used to store the new search direction.
- * @param {Function} callback Function invoked with the removed vertex, used e.g. to free the vertex object
- * in the object manager.
- * @return {Boolean} The result of the containment check.
- */
-DynamicGeometry.prototype.simplexContainsOrigin = function(direction, callback) {
-    var numVertices = this.vertices.length;
-
-    var a = this.lastVertexIndex;
-    var b = a - 1;
-    var c = a - 2;
-    var d = a - 3;
-
-    b = b < 0 ? b + numVertices : b;
-    c = c < 0 ? c + numVertices : c;
-    d = d < 0 ? d + numVertices : d;
-
-    var A = this.vertices[a].vertex;
-    var B = this.vertices[b].vertex;
-    var C = this.vertices[c].vertex;
-    var D = this.vertices[d].vertex;
-
-    var AO = Vec3.scale(A, -1, AO_REGISTER);
-    var AB = Vec3.subtract(B, A, AB_REGISTER);
-    var AC, AD, BC, BD;
-    var ABC, ACD, ABD, BCD;
-    var distanceABC, distanceACD, distanceABD, distanceBCD;
-
-    var vertexToRemove;
-
-    if (numVertices === 4) {
-        // Tetrahedron
-        AC = Vec3.subtract(C, A, AC_REGISTER);
-        AD = Vec3.subtract(D, A, AD_REGISTER);
-
-        ABC = Vec3.cross(AB, AC, new Vec3());
-        ACD = Vec3.cross(AC, AD, new Vec3());
-        ABD = Vec3.cross(AB, AD, new Vec3());
-        ABC.normalize();
-        ACD.normalize();
-        ABD.normalize();
-        if (Vec3.dot(ABC, AD) > 0) ABC.invert();
-        if (Vec3.dot(ACD, AB) > 0) ACD.invert();
-        if (Vec3.dot(ABD, AC) > 0) ABD.invert();
-        // Don't need to check BCD because we would have just checked that in the previous iteration
-        // -- we added A to the BCD triangle because A was in the direction of the origin.
-
-        distanceABC = Vec3.dot(ABC, AO);
-        distanceACD = Vec3.dot(ACD, AO);
-        distanceABD = Vec3.dot(ABD, AO);
-
-        // Norms point away from origin -> origin is inside tetrahedron
-        if (distanceABC < 0.001 && distanceABD < 0.001 && distanceACD < 0.001) {
-            BC = Vec3.subtract(C, B, BC_REGISTER);
-            BD = Vec3.subtract(D, B, BD_REGISTER);
-            BCD = Vec3.cross(BC, BD, new Vec3());
-            BCD.normalize();
-            if (Vec3.dot(BCD, AB) <= 0) BCD.invert();
-            distanceBCD = -1 * Vec3.dot(BCD,B);
-            // Prep features for EPA
-            this.addFeature(-distanceABC, ABC, [a,b,c]);
-            this.addFeature(-distanceACD, ACD, [a,c,d]);
-            this.addFeature(-distanceABD, ABD, [a,d,b]);
-            this.addFeature(-distanceBCD, BCD, [b,c,d]);
-            return true;
-        }
-        else if (distanceABC >= 0.001) {
-            vertexToRemove = this.removeVertex(d);
-            direction.copy(ABC);
-        }
-        else if (distanceACD >= 0.001) {
-            vertexToRemove = this.removeVertex(b);
-            direction.copy(ACD);
-        }
-        else {
-            vertexToRemove = this.removeVertex(c);
-            direction.copy(ABD);
-        }
-    }
-    else if (numVertices === 3) {
-        // Triangle
-        AC = Vec3.subtract(C, A, AC_REGISTER);
-        Vec3.cross(AB, AC, direction);
-        if (Vec3.dot(direction, AO) <= 0) direction.invert();
-    }
-    else {
-        // Line
-        direction.copy(tripleProduct(AB, AO, AB));
-    }
-    if (vertexToRemove && callback) callback(vertexToRemove);
-    return false;
-};
-
-/**
  * Given an array of Vec3's, computes the convex hull. Used in constructing bodies in the physics system and to
  * create custom GL meshes.
  *
  * @class ConvexHull
- * @param {Vec3[]} vertices Cloud of vertices of which the enclosing convex hull is desired.
- * @param {Number} iterations Maximum number of vertices to compose the convex hull.
+ * @param {Vec3[]} vertices - Cloud of vertices of which the enclosing convex hull is desired.
+ * @param {Number} iterations - Maximum number of vertices to compose the convex hull.
  */
-function ConvexHull(vertices, iterations) {
-    iterations = iterations || 1e3;
-    var hull = _computeConvexHull(vertices, iterations);
+class ConvexHull {
+    constructor(vertices, iterations) {
+        iterations = iterations || 1e3;
+        const hull = _computeConvexHull(vertices, iterations);
 
-    var i, len;
+        let i, len;
 
-    var indices = [];
-    for (i = 0, len = hull.features.length; i < len; i++) {
-        var f = hull.features[i];
-        if (f) indices.push(f.vertexIndices);
+        const indices = [];
+        for (i = 0, len = hull.features.length; i < len; i++) {
+            const f = hull.features[i];
+            if (f) indices.push(f.vertexIndices);
+        }
+
+        const polyhedralProperties = _computePolyhedralProperties(hull.vertices, indices);
+        const centroid = polyhedralProperties.centroid;
+
+        const worldVertices = [];
+        for (i = 0, len = hull.vertices.length; i < len; i++) {
+            worldVertices.push(Vec3.subtract(hull.vertices[i].vertex, centroid, new Vec3()));
+        }
+
+        const normals = [];
+        for (i = 0, len = worldVertices.length; i < len; i++) {
+            normals.push(Vec3.normalize(worldVertices[i], new Vec3()));
+        }
+
+        const graph = {};
+        const _neighborMatrix = {};
+        for (i = 0; i < indices.length; i++) {
+            const a = indices[i][0];
+            const b = indices[i][1];
+            const c = indices[i][2];
+
+            _neighborMatrix[a] = _neighborMatrix[a] || {};
+            _neighborMatrix[b] = _neighborMatrix[b] || {};
+            _neighborMatrix[c] = _neighborMatrix[c] || {};
+
+            graph[a] = graph[a] || [];
+            graph[b] = graph[b] || [];
+            graph[c] = graph[c] || [];
+
+            if (!_neighborMatrix[a][b]) {
+                _neighborMatrix[a][b] = 1;
+                graph[a].push(b);
+            }
+            if (!_neighborMatrix[a][c]) {
+                _neighborMatrix[a][c] = 1;
+                graph[a].push(c);
+            }
+            if (!_neighborMatrix[b][a]) {
+                _neighborMatrix[b][a] = 1;
+                graph[b].push(a);
+            }
+            if (!_neighborMatrix[b][c]) {
+                _neighborMatrix[b][c] = 1;
+                graph[b].push(c);
+            }
+            if (!_neighborMatrix[c][a]) {
+                _neighborMatrix[c][a] = 1;
+                graph[c].push(a);
+            }
+            if (!_neighborMatrix[c][b]) {
+                _neighborMatrix[c][b] = 1;
+                graph[c].push(b);
+            }
+        }
+
+        this.indices = indices;
+        this.vertices = worldVertices;
+        this.normals = normals;
+        this.polyhedralProperties = polyhedralProperties;
+        this.graph = graph;
     }
-
-    var polyhedralProperties = _computePolyhedralProperties(hull.vertices, indices);
-    var centroid = polyhedralProperties.centroid;
-
-    var worldVertices = [];
-    for (i = 0, len = hull.vertices.length; i < len; i++) {
-        worldVertices.push(Vec3.subtract(hull.vertices[i].vertex, centroid, new Vec3()));
-    }
-
-    var normals = [];
-    for (i = 0, len = worldVertices.length; i < len; i++) {
-        normals.push(Vec3.normalize(worldVertices[i], new Vec3()));
-    }
-
-    var graph = {};
-    var _neighborMatrix = {};
-    for (i = 0; i < indices.length; i++) {
-        var a = indices[i][0];
-        var b = indices[i][1];
-        var c = indices[i][2];
-
-        _neighborMatrix[a] = _neighborMatrix[a] || {};
-        _neighborMatrix[b] = _neighborMatrix[b] || {};
-        _neighborMatrix[c] = _neighborMatrix[c] || {};
-
-        graph[a] = graph[a] || [];
-        graph[b] = graph[b] || [];
-        graph[c] = graph[c] || [];
-
-        if (!_neighborMatrix[a][b]) {
-            _neighborMatrix[a][b] = 1;
-            graph[a].push(b);
-        }
-        if (!_neighborMatrix[a][c]) {
-            _neighborMatrix[a][c] = 1;
-            graph[a].push(c);
-        }
-        if (!_neighborMatrix[b][a]) {
-            _neighborMatrix[b][a] = 1;
-            graph[b].push(a);
-        }
-        if (!_neighborMatrix[b][c]) {
-            _neighborMatrix[b][c] = 1;
-            graph[b].push(c);
-        }
-        if (!_neighborMatrix[c][a]) {
-            _neighborMatrix[c][a] = 1;
-            graph[c].push(a);
-        }
-        if (!_neighborMatrix[c][b]) {
-            _neighborMatrix[c][b] = 1;
-            graph[c].push(b);
-        }
-    }
-
-    this.indices = indices;
-    this.vertices = worldVertices;
-    this.normals = normals;
-    this.polyhedralProperties = polyhedralProperties;
-    this.graph = graph;
 }
 
 /**
@@ -536,30 +540,30 @@ function ConvexHull(vertices, iterations) {
  *
  * @method
  * @private
- * @param {Vec3[]} vertices Cloud of vertices of which the enclosing convex hull is desired.
- * @param {Number} maxIterations Maximum number of vertices to compose the convex hull.
- * @return {DynamicGeometry} The computed hull.
+ * @param {Vec3[]} vertices - Cloud of vertices of which the enclosing convex hull is desired.
+ * @param {Number} maxIterations - Maximum number of vertices to compose the convex hull.
+ * @returns {DynamicGeometry} The computed hull.
  */
 function _computeConvexHull(vertices, maxIterations) {
-    var hull = new DynamicGeometry();
+    const hull = new DynamicGeometry();
 
     hull.addVertex(_hullSupport(vertices, new Vec3(1, 0, 0)));
     hull.addVertex(_hullSupport(vertices, new Vec3(-1, 0, 0)));
-    var A = hull.vertices[0].vertex;
-    var B = hull.vertices[1].vertex;
-    var AB = Vec3.subtract(B, A, AB_REGISTER);
+    let A = hull.vertices[0].vertex;
+    let B = hull.vertices[1].vertex;
+    const AB = Vec3.subtract(B, A, AB_REGISTER);
 
-    var dot;
-    var vertex;
-    var furthest;
-    var index;
-    var i, len;
+    let dot;
+    let vertex;
+    let furthest;
+    let index;
+    let i, len;
 
-    var max = -Infinity;
+    let max = -Infinity;
     for (i = 0; i < vertices.length; i++) {
         vertex = vertices[i];
         if (vertex === A || vertex === B) continue;
-        var AV = Vec3.subtract(vertex, A, VEC_REGISTER);
+        const AV = Vec3.subtract(vertex, A, VEC_REGISTER);
         dot = Vec3.dot(AV, tripleProduct(AB, AV, AB));
         dot = dot < 0 ? dot * -1 : dot;
         if (dot > max) {
@@ -573,9 +577,9 @@ function _computeConvexHull(vertices, maxIterations) {
         index: index
     });
 
-    var C = furthest;
-    var AC = Vec3.subtract(C, A, AC_REGISTER);
-    var ABC = Vec3.cross(AB, AC, new Vec3());
+    const C = furthest;
+    const AC = Vec3.subtract(C, A, AC_REGISTER);
+    const ABC = Vec3.cross(AB, AC, new Vec3());
     ABC.normalize();
 
     max = -Infinity;
@@ -595,14 +599,14 @@ function _computeConvexHull(vertices, maxIterations) {
         index: index
     });
 
-    var D = furthest;
-    var AD = Vec3.subtract(D, A, AD_REGISTER);
-    var BC = Vec3.subtract(C, B, BC_REGISTER);
-    var BD = Vec3.subtract(D, B, BD_REGISTER);
+    const D = furthest;
+    const AD = Vec3.subtract(D, A, AD_REGISTER);
+    const BC = Vec3.subtract(C, B, BC_REGISTER);
+    const BD = Vec3.subtract(D, B, BD_REGISTER);
 
-    var ACD = Vec3.cross(AC, AD, new Vec3());
-    var ABD = Vec3.cross(AB, AD, new Vec3());
-    var BCD = Vec3.cross(BC, BD, new Vec3());
+    const ACD = Vec3.cross(AC, AD, new Vec3());
+    const ABD = Vec3.cross(AB, AD, new Vec3());
+    const BCD = Vec3.cross(BC, BD, new Vec3());
     ACD.normalize();
     ABD.normalize();
     BCD.normalize();
@@ -611,41 +615,41 @@ function _computeConvexHull(vertices, maxIterations) {
     if (Vec3.dot(ABD, AC) > 0) ABD.invert();
     if (Vec3.dot(BCD, AB) < 0) BCD.invert();
 
-    var a = 0;
-    var b = 1;
-    var c = 2;
-    var d = 3;
+    const a = 0;
+    const b = 1;
+    const c = 2;
+    const d = 3;
 
     hull.addFeature(null, ABC, [a, b, c]);
     hull.addFeature(null, ACD, [a, c, d]);
     hull.addFeature(null, ABD, [a, b, d]);
     hull.addFeature(null, BCD, [b, c, d]);
 
-    var assigned = {};
+    const assigned = {};
     for (i = 0, len = hull.vertices.length; i < len; i++) {
        assigned[hull.vertices[i].index] = true;
     }
 
-    var cx = A.x + B.x + C.x + D.x;
-    var cy = A.y + B.y + C.y + D.y;
-    var cz = A.z + B.z + C.z + D.z;
-    var referencePoint = new Vec3(cx, cy, cz);
+    const cx = A.x + B.x + C.x + D.x;
+    const cy = A.y + B.y + C.y + D.y;
+    const cz = A.z + B.z + C.z + D.z;
+    const referencePoint = new Vec3(cx, cy, cz);
     referencePoint.scale(0.25);
 
-    var features = hull.features;
-    var iteration = 0;
+    const features = hull.features;
+    let iteration = 0;
     while (iteration++ < maxIterations) {
-        var currentFeature = null;
+        let currentFeature = null;
         for (i = 0, len = features.length; i < len; i++) {
             if (!features[i] || features[i].done) continue;
             currentFeature = features[i];
             furthest = null;
             index = null;
             A = hull.vertices[currentFeature.vertexIndices[0]].vertex;
-            var s = _hullSupport(vertices, currentFeature.normal);
+            const s = _hullSupport(vertices, currentFeature.normal);
             furthest = s.vertex;
             index = s.index;
-            var dist = Vec3.dot(Vec3.subtract(furthest, A, VEC_REGISTER), currentFeature.normal);
+            const dist = Vec3.dot(Vec3.subtract(furthest, A, VEC_REGISTER), currentFeature.normal);
 
             if (dist < 0.001 || assigned[index]) {
                 currentFeature.done = true;
@@ -669,18 +673,18 @@ function _computeConvexHull(vertices, maxIterations) {
  *
  * @method
  * @private
- * @param {Number} w0 Reference x coordinate.
- * @param {Number} w1 Reference y coordinate.
- * @param {Number} w2 Reference z coordinate.
- * @param {Number[]} f One of two output registers to contain the result of the calculation.
- * @param {Number[]} g One of two output registers to contain the result of the calculation.
- * @return {undefined} undefined
+ * @param {Number} w0 - Reference x coordinate.
+ * @param {Number} w1 - Reference y coordinate.
+ * @param {Number} w2 - Reference z coordinate.
+ * @param {Number[]} f - One of two output registers to contain the result of the calculation.
+ * @param {Number[]} g - One of two output registers to contain the result of the calculation.
+ * @returns {undefined} undefined
  */
 function _subexpressions(w0, w1, w2, f, g) {
-    var t0 = w0 + w1;
+    const t0 = w0 + w1;
     f[0] = t0 + w2;
-    var t1 = w0 * w0;
-    var t2 = t1 + w1 * t0;
+    const t1 = w0 * w0;
+    const t2 = t1 + w1 * t0;
     f[1] = t2 + w2 * f[0];
     f[2] = w0 * t1 + w1 * t2 + w2 * f[1];
     g[0] = f[1] + w0 * (f[0] + w0);
@@ -693,45 +697,45 @@ function _subexpressions(w0, w1, w2, f, g) {
  *
  * @method
  * @private
- * @param {Vec3[]} vertices The vertices of the polyhedron.
- * @param {Array.<Number[]>} indices Array of arrays of indices of vertices composing the triangular features of the polyhedron,
+ * @param {Vec3[]} vertices - The vertices of the polyhedron.
+ * @param {Array.<Number[]>} indices - Array of arrays of indices of vertices composing the triangular features of the polyhedron,
  * one array for each feature.
- * @return {Object} Object holding the calculated span, volume, center, and euler tensor.
+ * @returns {Object} Object holding the calculated span, volume, center, and euler tensor.
  */
 function _computePolyhedralProperties(vertices, indices) {
     // Order: 1, x, y, z, x^2, y^2, z^2, xy, yz, zx
-    var integrals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    var fx = [];
-    var fy = [];
-    var fz = [];
-    var gx = [];
-    var gy = [];
-    var gz = [];
+    const integrals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const fx = [];
+    const fy = [];
+    const fz = [];
+    const gx = [];
+    const gy = [];
+    const gz = [];
 
-    var i, len;
+    let i, len;
 
     for (i = 0, len = indices.length; i < len; i++) {
-        var A = vertices[indices[i][0]].vertex;
-        var B = vertices[indices[i][1]].vertex;
-        var C = vertices[indices[i][2]].vertex;
-        var AB = Vec3.subtract(B, A, AB_REGISTER);
-        var AC = Vec3.subtract(C, A, AC_REGISTER);
-        var ABC = AB.cross(AC);
+        const A = vertices[indices[i][0]].vertex;
+        const B = vertices[indices[i][1]].vertex;
+        const C = vertices[indices[i][2]].vertex;
+        const AB = Vec3.subtract(B, A, AB_REGISTER);
+        const AC = Vec3.subtract(C, A, AC_REGISTER);
+        const ABC = AB.cross(AC);
         if (Vec3.dot(A, ABC) < 0) ABC.invert();
 
-        var d0 = ABC.x;
-        var d1 = ABC.y;
-        var d2 = ABC.z;
+        const d0 = ABC.x;
+        const d1 = ABC.y;
+        const d2 = ABC.z;
 
-        var x0 = A.x;
-        var y0 = A.y;
-        var z0 = A.z;
-        var x1 = B.x;
-        var y1 = B.y;
-        var z1 = B.z;
-        var x2 = C.x;
-        var y2 = C.y;
-        var z2 = C.z;
+        const x0 = A.x;
+        const y0 = A.y;
+        const z0 = A.z;
+        const x1 = B.x;
+        const y1 = B.y;
+        const z1 = B.z;
+        const x2 = C.x;
+        const y2 = C.y;
+        const z2 = C.z;
 
         _subexpressions(x0, x1, x2, fx, gx);
         _subexpressions(y0, y1, y2, fy, gy);
@@ -760,12 +764,12 @@ function _computePolyhedralProperties(vertices, indices) {
     integrals[8] /= 120;
     integrals[9] /= 120;
 
-    var minX = Infinity, maxX = -Infinity;
-    var minY = Infinity, maxY = -Infinity;
-    var minZ = Infinity, maxZ = -Infinity;
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
 
     for (i = 0, len = vertices.length; i < len; i++) {
-        var vertex = vertices[i].vertex;
+        const vertex = vertices[i].vertex;
         if (vertex.x < minX) minX = vertex.x;
         if (vertex.x > maxX) maxX = vertex.x;
         if (vertex.y < minY) minY = vertex.y;
@@ -774,12 +778,12 @@ function _computePolyhedralProperties(vertices, indices) {
         if (vertex.z > maxZ) maxZ = vertex.z;
     }
 
-    var size = [maxX - minX, maxY - minY, maxZ - minZ];
-    var volume = integrals[0];
-    var centroid = new Vec3(integrals[1], integrals[2], integrals[3]);
+    const size = [maxX - minX, maxY - minY, maxZ - minZ];
+    const volume = integrals[0];
+    const centroid = new Vec3(integrals[1], integrals[2], integrals[3]);
     centroid.scale(1 / volume);
 
-    var eulerTensor = new Mat33([
+    const eulerTensor = new Mat33([
                                   integrals[4], integrals[7], integrals[9],
                                   integrals[7], integrals[5], integrals[8],
                                   integrals[9], integrals[8], integrals[6]

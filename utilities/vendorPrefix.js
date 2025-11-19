@@ -22,9 +22,7 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
-var PREFIXES = ['', '-ms-', '-webkit-', '-moz-', '-o-'];
+const PREFIXES = ['', '-ms-', '-webkit-', '-moz-', '-o-'];
 
 /**
  * A helper function used for determining the vendor prefixed version of the
@@ -33,26 +31,22 @@ var PREFIXES = ['', '-ms-', '-webkit-', '-moz-', '-o-'];
  * Vendor checks are being conducted in the following order:
  *
  * 1. (no prefix)
- * 2. `-mz-`
+ * 2. `-ms-`
  * 3. `-webkit-`
  * 4. `-moz-`
  * 5. `-o-`
  *
- * @method vendorPrefix
- *
- * @param {String} property     CSS property (no camelCase), e.g.
- *                              `border-radius`.
- * @return {String} prefixed    Vendor prefixed version of passed in CSS
- *                              property (e.g. `-webkit-border-radius`).
+ * @param {string} property - CSS property (no camelCase), e.g. `border-radius`
+ * @returns {string} Vendor prefixed version of passed in CSS property (e.g. `-webkit-border-radius`)
  */
-function vendorPrefix(property) {
-    for (var i = 0; i < PREFIXES.length; i++) {
-        var prefixed = PREFIXES[i] + property;
-        if (document.documentElement.style[prefixed] === '') {
-            return prefixed;
-        }
+const vendorPrefix = (property) => {
+  for (let i = 0; i < PREFIXES.length; i++) {
+    const prefixed = PREFIXES[i] + property;
+    if (document.documentElement.style[prefixed] === '') {
+      return prefixed;
     }
-    return property;
-}
+  }
+  return property;
+};
 
 module.exports = vendorPrefix;

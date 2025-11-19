@@ -22,151 +22,124 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
 /**
  * A collection of utilities for handling paths.
  *
  * @namespace
  */
-var Path = {
+const Path = {
+  /**
+   * Determines if the passed in path has a trailing slash. Paths of the form
+   * 'body/0/1/' return true, while paths of the form 'body/0/1' return false.
+   *
+   * @param {string} path - The path
+   * @returns {boolean} Whether or not the path has a trailing slash
+   */
+  hasTrailingSlash(path) {
+    return path[path.length - 1] === '/';
+  },
 
-    /**
-     * determines if the passed in path has a trailing slash. Paths of the form
-     * 'body/0/1/' return true, while paths of the form 'body/0/1' return false.
-     *
-     * @method
-     *
-     * @param {String} path the path
-     *
-     * @return {Boolean} whether or not the path has a trailing slash
-     */
-    hasTrailingSlash: function hasTrailingSlash (path) {
-        return path[path.length - 1] === '/';
-    },
+  /**
+   * Returns the depth in the tree this path represents. Essentially counts
+   * the slashes ignoring a trailing slash.
+   *
+   * @param {string} path - The path
+   * @returns {number} The depth in the tree that this path represents
+   */
+  depth(path) {
+    let count = 0;
+    const length = path.length;
+    const len = this.hasTrailingSlash(path) ? length - 1 : length;
+    for (let i = 0; i < len; i++) count += path[i] === '/' ? 1 : 0;
+    return count;
+  },
 
-    /**
-     * Returns the depth in the tree this path represents. Essentially counts
-     * the slashes ignoring a trailing slash.
-     *
-     * @method
-     *
-     * @param {String} path the path
-     *
-     * @return {Number} the depth in the tree that this path represents
-     */
-    depth: function depth (path) {
-        var count = 0;
-        var length = path.length;
-        var len = this.hasTrailingSlash(path) ? length - 1 : length;
-        var i = 0;
-        for (; i < len ; i++) count += path[i] === '/' ? 1 : 0;
-        return count;
-    },
+  /**
+   * Gets the position of this path in relation to its siblings.
+   *
+   * @param {string} path - The path
+   * @returns {number} The index of this path in relation to its siblings
+   */
+  index(path) {
+    const length = path.length;
+    let len = this.hasTrailingSlash(path) ? length - 1 : length;
+    while (len--) if (path[len] === '/') break;
+    const result = parseInt(path.substring(len + 1));
+    return isNaN(result) ? 0 : result;
+  },
 
-    /**
-     * Gets the position of this path in relation to its siblings.
-     *
-     * @method
-     *
-     * @param {String} path the path
-     *
-     * @return {Number} the index of this path in relation to its siblings.
-     */
-    index: function index (path) {
-        var length = path.length;
-        var len = this.hasTrailingSlash(path) ? length - 1 : length;
-        while (len--) if (path[len] === '/') break;
-        var result = parseInt(path.substring(len + 1));
-        return isNaN(result) ? 0 : result;
-    },
-
-    /**
-     * Gets the position of the path at a particular breadth in relationship
-     * to its siblings
-     *
-     * @method
-     *
-     * @param {String} path the path
-     * @param {Number} depth the breadth at which to find the index
-     *
-     * @return {Number} index at the particular depth
-     */
-    indexAtDepth: function indexAtDepth (path, depth) {
-        var i = 0;
-        var len = path.length;
-        var index = 0;
-        for (; i < len ; i++) {
-            if (path[i] === '/') index++;
-            if (index === depth) {
-                path = path.substring(i ? i + 1 : i);
-                index = path.indexOf('/');
-                path = index === -1 ? path : path.substring(0, index);
-                index = parseInt(path);
-                return isNaN(index) ? path : index;
-            }
-        }
-    },
-
-    /**
-     * returns the path of the passed in path's parent.
-     *
-     * @method
-     *
-     * @param {String} path the path
-     *
-     * @return {String} the path of the passed in path's parent
-     */
-    parent: function parent (path) {
-        return path.substring(0, path.lastIndexOf('/', path.length - 2));
-    },
-
-    /**
-     * Determines whether or not the first argument path is the direct child
-     * of the second argument path.
-     *
-     * @method
-     *
-     * @param {String} child the path that may be a child
-     * @param {String} parent the path that may be a parent
-     *
-     * @return {Boolean} whether or not the first argument path is a child of the second argument path
-     */
-    isChildOf: function isChildOf (child, parent) {
-        return this.isDescendentOf(child, parent) && this.depth(child) === this.depth(parent) + 1;
-    },
-
-    /**
-     * Returns true if the first argument path is a descendent of the second argument path.
-     *
-     * @method
-     *
-     * @param {String} child potential descendent path
-     * @param {String} parent potential ancestor path
-     *
-     * @return {Boolean} whether or not the path is a descendent
-     */
-    isDescendentOf: function isDescendentOf(child, parent) {
-        if (child === parent) return false;
-        child = this.hasTrailingSlash(child) ? child : child + '/';
-        parent = this.hasTrailingSlash(parent) ? parent : parent + '/';
-        return this.depth(parent) < this.depth(child) && child.indexOf(parent) === 0;
-    },
-
-    /**
-     * returns the selector portion of the path.
-     *
-     * @method
-     *
-     * @param {String} path the path
-     *
-     * @return {String} the selector portion of the path.
-     */
-    getSelector: function getSelector(path) {
-        var index = path.indexOf('/');
-        return index === -1 ? path : path.substring(0, index);
+  /**
+   * Gets the position of the path at a particular breadth in relationship
+   * to its siblings.
+   *
+   * @param {string} path - The path
+   * @param {number} depth - The breadth at which to find the index
+   * @returns {number|string} Index at the particular depth
+   */
+  indexAtDepth(path, depth) {
+    const len = path.length;
+    let index = 0;
+    for (let i = 0; i < len; i++) {
+      if (path[i] === '/') index++;
+      if (index === depth) {
+        path = path.substring(i ? i + 1 : i);
+        index = path.indexOf('/');
+        path = index === -1 ? path : path.substring(0, index);
+        index = parseInt(path);
+        return isNaN(index) ? path : index;
+      }
     }
+  },
 
+  /**
+   * Returns the path of the passed in path's parent.
+   *
+   * @param {string} path - The path
+   * @returns {string} The path of the passed in path's parent
+   */
+  parent(path) {
+    return path.substring(0, path.lastIndexOf('/', path.length - 2));
+  },
+
+  /**
+   * Determines whether or not the first argument path is the direct child
+   * of the second argument path.
+   *
+   * @param {string} child - The path that may be a child
+   * @param {string} parent - The path that may be a parent
+   * @returns {boolean} Whether or not the first argument path is a child of the second argument path
+   */
+  isChildOf(child, parent) {
+    return (
+      this.isDescendentOf(child, parent) &&
+      this.depth(child) === this.depth(parent) + 1
+    );
+  },
+
+  /**
+   * Returns true if the first argument path is a descendent of the second argument path.
+   *
+   * @param {string} child - Potential descendent path
+   * @param {string} parent - Potential ancestor path
+   * @returns {boolean} Whether or not the path is a descendent
+   */
+  isDescendentOf(child, parent) {
+    if (child === parent) return false;
+    child = this.hasTrailingSlash(child) ? child : child + '/';
+    parent = this.hasTrailingSlash(parent) ? parent : parent + '/';
+    return this.depth(parent) < this.depth(child) && child.indexOf(parent) === 0;
+  },
+
+  /**
+   * Returns the selector portion of the path.
+   *
+   * @param {string} path - The path
+   * @returns {string} The selector portion of the path
+   */
+  getSelector(path) {
+    const index = path.indexOf('/');
+    return index === -1 ? path : path.substring(0, index);
+  },
 };
 
 module.exports = Path;

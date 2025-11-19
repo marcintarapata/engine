@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * The MIT License (MIT)
  *
@@ -29,27 +27,26 @@
  * comprising two "associate" arrays, one with the keys and the other
  * with the values.
  *
- * @method keyValuesToArrays
- *
- * @param {Object} obj                      Objects where to extract keys and values
- *                                          from.
- * @return {Object}         result
- *         {Array.<String>} result.keys     Keys of `result`, as returned by
- *                                          `Object.keys()`
- *         {Array}          result.values   Values of passed in object.
+ * @param {Object} obj - Object from which to extract keys and values
+ * @returns {Object} result
+ * @returns {Array<string>} result.keys - Keys of object
+ * @returns {Array} result.values - Values of object
  */
-module.exports = function keyValuesToArrays(obj) {
-    var keysArray = [], valuesArray = [];
-    var i = 0;
-    for(var key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            keysArray[i] = key;
-            valuesArray[i] = obj[key];
-            i++;
-        }
+const keyValuesToArrays = (obj) => {
+  const keysArray = [];
+  const valuesArray = [];
+  let i = 0;
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      keysArray[i] = key;
+      valuesArray[i] = obj[key];
+      i++;
     }
-    return {
-        keys: keysArray,
-        values: valuesArray
-    };
+  }
+  return {
+    keys: keysArray,
+    values: valuesArray,
+  };
 };
+
+module.exports = keyValuesToArrays;

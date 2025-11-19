@@ -22,7 +22,33 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+/**
+ * Helper function to create a request function for a pool.
+ *
+ * @param {Array} pool - The object pool
+ * @param {Function} Constructor - Constructor function for new objects
+ * @returns {Function} Request function
+ * @private
+ */
+const _request = (pool, Constructor) => {
+  return function request() {
+    if (pool.length !== 0) return pool.pop();
+    else return new Constructor();
+  };
+};
+
+/**
+ * Helper function to create a free function for a pool.
+ *
+ * @param {Array} pool - The object pool
+ * @returns {Function} Free function
+ * @private
+ */
+const _free = (pool) => {
+  return function free(obj) {
+    pool.push(obj);
+  };
+};
 
 /**
  * Singleton object to manage recycling of objects with typically short
@@ -30,62 +56,39 @@
  *
  * @singleton
  */
-var ObjectManager = {};
+const ObjectManager = {
+  /**
+   * Internal pool used for storing instances of the registered constructors.
+   *
+   * @type {Object}
+   * @private
+   */
+  pools: {},
 
-
-/**
- * Internal pool used for storing instances of the regsitered constructors.
- *
- * @type {Object}
- * @private
- */
-ObjectManager.pools = {};
-
-/**
- * Register request and free functions for the given type.
- *
- * @method register
- *
- * @param {String} type             Unique object "type" to identity pools of
- *                                  allocated objects.
- * @param {Function} Constructor    Zero-argument Constructor function used for
- *                                  allocating new objects.
- * @return {undefined} undefined
- */
-ObjectManager.register = function(type, Constructor) {
-    var pool = this.pools[type] = [];
+  /**
+   * Register request and free functions for the given type.
+   *
+   * @param {string} type - Unique object "type" to identify pools of allocated objects
+   * @param {Function} Constructor - Zero-argument Constructor function used for allocating new objects
+   */
+  register(type, Constructor) {
+    const pool = this.pools[type] = [];
 
     this['request' + type] = _request(pool, Constructor);
     this['free' + type] = _free(pool);
-};
+  },
 
-function _request(pool, Constructor) {
-    return function request() {
-        if (pool.length !== 0) return pool.pop();
-        else return new Constructor();
-    };
-}
-
-function _free(pool) {
-    return function free(obj) {
-        pool.push(obj);
-    };
-}
-
-/**
- * Untrack all object of the given type. Used to allow allocated objects to be
- * garbage collected.
- *
- * @method disposeOf
- *
- * @param {String}  type    type as registered using
- *                          [register]{@link ObjectManager#register}.
- * @return {undefined} undefined
- */
-ObjectManager.disposeOf = function(type) {
-    var pool = this.pools[type];
-    var i = pool.length;
+  /**
+   * Untrack all objects of the given type. Used to allow allocated objects to be
+   * garbage collected.
+   *
+   * @param {string} type - Type as registered using register()
+   */
+  disposeOf(type) {
+    const pool = this.pools[type];
+    let i = pool.length;
     while (i--) pool.pop();
+  },
 };
 
 module.exports = ObjectManager;

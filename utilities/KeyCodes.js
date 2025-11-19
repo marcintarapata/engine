@@ -22,15 +22,13 @@
  * THE SOFTWARE.
  */
  
-'use strict';
-
 /**
- * Collection to map keyboard codes in plain english
+ * Collection to map keyboard codes in plain English.
+ * Maps key characters and special keys to their keyboard codes.
  *
- * @class KeyCodes
- * @static
+ * @type {Object.<string|number, number>}
  */
-module.exports = {
+const KeyCodes = {
     0: 48,
     1: 49,
     2: 50,
@@ -98,8 +96,10 @@ module.exports = {
     RIGHT_ARROW: 39,
     UP_ARROW: 38,
     DOWN_ARROW: 40,
-    SPACE: 32,
-    SHIFT: 16,
-    TAB: 9
+  SPACE: 32,
+  SHIFT: 16,
+  TAB: 9,
 };
+
+module.exports = KeyCodes;
 
