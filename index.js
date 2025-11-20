@@ -22,21 +22,100 @@
  * THE SOFTWARE.
  */
 
+// Core modules
+const components = require('./components');
+const core = require('./core');
+const renderLoops = require('./render-loops');
+const domRenderables = require('./dom-renderables');
+const domRenderers = require('./dom-renderers');
+const math = require('./math');
+const physics = require('./physics');
+const renderers = require('./renderers');
+const transitions = require('./transitions');
+const utilities = require('./utilities');
+const webglRenderables = require('./webgl-renderables');
+const webglRenderers = require('./webgl-renderers');
+const webglGeometries = require('./webgl-geometries');
+const webglMaterials = require('./webgl-materials');
+const webglShaders = require('./webgl-shaders');
+const polyfills = require('./polyfills');
+
+// New Phase 3 modules
+const errors = require('./errors');
+const builders = require('./builders');
+
+// Builder helper functions for convenient API
+function createEngine() {
+  const FamousEngine = require('./core/FamousEngine');
+  return new builders.EngineBuilder(FamousEngine.constructor || function() {
+    // Fallback for singleton pattern - create instance methods
+    const instance = Object.create(FamousEngine);
+    return instance;
+  });
+}
+
+function createScene(selector, engine) {
+  if (!engine) {
+    engine = core.FamousEngine;
+  }
+  return new builders.SceneBuilder(selector, engine);
+}
+
+function createNode(parent) {
+  return new builders.NodeBuilder(core.Node, parent);
+}
+
+// Main export - namespaced modules for backward compatibility
 module.exports = {
-    components: require('./components'),
-    core: require('./core'),
-    renderLoops: require('./render-loops'),
-    domRenderables: require('./dom-renderables'),
-    domRenderers: require('./dom-renderers'),
-    math: require('./math'),
-    physics: require('./physics'),
-    renderers: require('./renderers'),
-    transitions: require('./transitions'),
-    utilities: require('./utilities'),
-    webglRenderables: require('./webgl-renderables'),
-    webglRenderers: require('./webgl-renderers'),
-    webglGeometries: require('./webgl-geometries'),
-    webglMaterials: require('./webgl-materials'),
-    webglShaders: require('./webgl-shaders'),
-    polyfills: require('./polyfills')
+  // Existing modules
+  components,
+  core,
+  renderLoops,
+  domRenderables,
+  domRenderers,
+  math,
+  physics,
+  renderers,
+  transitions,
+  utilities,
+  webglRenderables,
+  webglRenderers,
+  webglGeometries,
+  webglMaterials,
+  webglShaders,
+  polyfills,
+
+  // New Phase 3 modules
+  errors,
+  builders,
+
+  // Builder factory functions
+  createEngine,
+  createScene,
+  createNode,
 };
+
+// For ESM compatibility - named exports
+if (typeof exports !== 'undefined') {
+  exports.components = components;
+  exports.core = core;
+  exports.renderLoops = renderLoops;
+  exports.domRenderables = domRenderables;
+  exports.domRenderers = domRenderers;
+  exports.math = math;
+  exports.physics = physics;
+  exports.renderers = renderers;
+  exports.transitions = transitions;
+  exports.utilities = utilities;
+  exports.webglRenderables = webglRenderables;
+  exports.webglRenderers = webglRenderers;
+  exports.webglGeometries = webglGeometries;
+  exports.webglMaterials = webglMaterials;
+  exports.webglShaders = webglShaders;
+  exports.polyfills = polyfills;
+  exports.errors = errors;
+  exports.builders = builders;
+  exports.createEngine = createEngine;
+  exports.createScene = createScene;
+  exports.createNode = createNode;
+}
