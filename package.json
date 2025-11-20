@@ -3,6 +3,31 @@
   "version": "0.7.1",
   "description": "A powerful JavaScript rendering engine with 3D scene graph, DOM and WebGL rendering, physics, and animations",
   "main": "index.js",
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./core": "./core/index.js",
+    "./components": "./components/index.js",
+    "./physics": "./physics/index.js",
+    "./math": "./math/index.js",
+    "./transitions": "./transitions/index.js",
+    "./utilities": "./utilities/index.js",
+    "./renderers": "./renderers/index.js",
+    "./dom-renderables": "./dom-renderables/index.js",
+    "./dom-renderers": "./dom-renderers/index.js",
+    "./webgl-renderables": "./webgl-renderables/index.js",
+    "./webgl-renderers": "./webgl-renderers/index.js",
+    "./webgl-geometries": "./webgl-geometries/index.js",
+    "./webgl-materials": "./webgl-materials/index.js",
+    "./webgl-shaders": "./webgl-shaders/index.js",
+    "./render-loops": "./render-loops/index.js",
+    "./polyfills": "./polyfills/index.js",
+    "./errors": "./errors/index.js",
+    "./builders": "./builders/index.js",
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
