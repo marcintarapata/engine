@@ -158,7 +158,7 @@ const node = createNode(parent)
 
 ### 3. ✅ Tree-shakeable Exports
 
-Configured package.json with `exports` field for fine-grained module imports and better tree-shaking.
+Configured package.json with `exports` field for fine-grained module imports and better tree-shaking, **with wildcard patterns to preserve backward compatibility**.
 
 **Package.json Exports:**
 ```json
@@ -166,12 +166,18 @@ Configured package.json with `exports` field for fine-grained module imports and
   "exports": {
     ".": "./index.js",
     "./core": "./core/index.js",
+    "./core/*": "./core/*.js",        // Wildcard for deep imports
     "./components": "./components/index.js",
+    "./components/*": "./components/*.js",
     "./physics": "./physics/index.js",
+    "./physics/*": "./physics/*.js",
     "./math": "./math/index.js",
+    "./math/*": "./math/*.js",
     "./errors": "./errors/index.js",
+    "./errors/*": "./errors/*.js",
     "./builders": "./builders/index.js",
-    // ... other modules
+    "./builders/*": "./builders/*.js",
+    // ... other modules with wildcards
   }
 }
 ```
@@ -181,11 +187,16 @@ Configured package.json with `exports` field for fine-grained module imports and
 // Import entire library
 const Famous = require('famous');
 
-// Import specific modules (tree-shakeable)
+// Import module indices (recommended - tree-shakeable)
 const { FamousEngine, Node, Scene } = require('famous/core');
 const { Camera, Position, Rotation } = require('famous/components');
 const { PhysicsEngine, Particle } = require('famous/physics');
 const { Vec3, Quaternion } = require('famous/math');
+
+// Deep imports (legacy - still supported via wildcards)
+const FamousEngine = require('famous/core/FamousEngine');
+const Camera = require('famous/components/Camera');
+const PhysicsEngine = require('famous/physics/PhysicsEngine');
 
 // Import builders
 const { createEngine, createScene, createNode } = require('famous');
@@ -376,6 +387,12 @@ Phase 3 is **100% backward compatible**. All changes are additive:
 - Old initialization patterns still work
 - No breaking changes to existing APIs
 - New features are opt-in
+
+**Deep Imports Preserved:**
+The `exports` field includes wildcard patterns (`./core/*`) to ensure legacy deep imports continue working:
+- ✅ `require('famous/core/FamousEngine')` - still works
+- ✅ `require('famous/components/Camera')` - still works
+- ✅ `require('famous/physics/PhysicsEngine')` - still works
 
 You can:
 1. Continue using existing code without changes
