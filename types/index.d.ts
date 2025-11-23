@@ -12,6 +12,7 @@
 /// <reference path="./physics.d.ts" />
 /// <reference path="./dom-renderables.d.ts" />
 /// <reference path="./renderers.d.ts" />
+/// <reference path="./utilities.d.ts" />
 
 declare module 'famous' {
   // Core module

@@ -94,8 +94,12 @@ function WebGLRenderer(canvas, compositor) {
         boundElementBuffer: null,
         lastDrawn: null,
         enabledAttributes: {},
-        enabledAttributesKeys: []
+        enabledAttributesKeys: [],
+        boundVAO: null
     };
+
+    // Initialize WebGL capabilities after context creation
+    this._initCapabilities();
 
     this.resolutionName = ['u_resolution'];
     this.resolutionValues = [[0, 0, 0]];
@@ -139,6 +143,7 @@ function WebGLRenderer(canvas, compositor) {
 /**
  * Attempts to retreive the WebGLRenderer context using several
  * accessors. For browser compatability. Throws on error.
+ * Prefers WebGL 2.0 for better performance, with fallback to WebGL 1.0.
  *
  * @method
  *
@@ -147,17 +152,38 @@ function WebGLRenderer(canvas, compositor) {
  * @return {Object} WebGLContext WebGL context
  */
 WebGLRenderer.prototype.getWebGLContext = function getWebGLContext(canvas) {
-    var names = ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl'];
+    // Prefer WebGL 2.0 for better performance features (VAO, UBO, instancing)
+    var names = ['webgl2', 'webgl', 'experimental-webgl'];
     var context;
+    var contextOptions = {
+        alpha: true,
+        depth: true,
+        stencil: false,
+        antialias: true,
+        premultipliedAlpha: true,
+        preserveDrawingBuffer: false,
+        powerPreference: 'high-performance',
+        failIfMajorPerformanceCaveat: false
+    };
 
     for (var i = 0, len = names.length; i < len; i++) {
         try {
-            context = canvas.getContext(names[i]);
+            context = canvas.getContext(names[i], contextOptions);
+            if (context) {
+                // Store WebGL version for feature detection
+                this.webglVersion = names[i] === 'webgl2' ? 2 : 1;
+                this.isWebGL2 = this.webglVersion === 2;
+
+                // Log context info for debugging
+                if (typeof console !== 'undefined' && console.info) {
+                    console.info('Famous Engine: WebGL ' + this.webglVersion + ' context created');
+                }
+                return context;
+            }
         }
         catch (error) {
             console.error('Error creating WebGL context: ' + error.toString());
         }
-        if (context) return context;
     }
 
     if (!context) {
@@ -165,6 +191,121 @@ WebGLRenderer.prototype.getWebGLContext = function getWebGLContext(canvas) {
         return false;
     }
 
+};
+
+/**
+ * Initializes WebGL capabilities and extensions.
+ * Detects available features based on WebGL version.
+ *
+ * @method
+ * @private
+ *
+ * @return {undefined} undefined
+ */
+WebGLRenderer.prototype._initCapabilities = function _initCapabilities() {
+    var gl = this.gl;
+
+    // Initialize capabilities object
+    this.capabilities = {
+        webglVersion: this.webglVersion || 1,
+        isWebGL2: this.isWebGL2 || false,
+        maxTextureUnits: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
+        maxVertexAttribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+        maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+        maxCubeMapSize: gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE),
+        maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+        maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+        renderer: gl.getParameter(gl.RENDERER),
+        vendor: gl.getParameter(gl.VENDOR),
+        vao: false,
+        instancedArrays: false,
+        floatTextures: false,
+        depthTextures: false,
+        anisotropicFiltering: false,
+        maxAnisotropy: 1
+    };
+
+    // WebGL 2.0 has these features built-in
+    if (this.isWebGL2) {
+        this.capabilities.vao = true;
+        this.capabilities.instancedArrays = true;
+        this.capabilities.floatTextures = true;
+        this.capabilities.depthTextures = true;
+
+        // VAO methods are native in WebGL 2
+        this._createVAO = function() { return gl.createVertexArray(); };
+        this._bindVAO = function(vao) { gl.bindVertexArray(vao); };
+        this._deleteVAO = function(vao) { gl.deleteVertexArray(vao); };
+
+        // Instanced arrays are native in WebGL 2
+        this._drawArraysInstanced = function(mode, first, count, instanceCount) {
+            gl.drawArraysInstanced(mode, first, count, instanceCount);
+        };
+        this._drawElementsInstanced = function(mode, count, type, offset, instanceCount) {
+            gl.drawElementsInstanced(mode, count, type, offset, instanceCount);
+        };
+        this._vertexAttribDivisor = function(index, divisor) {
+            gl.vertexAttribDivisor(index, divisor);
+        };
+    }
+    else {
+        // Try to get VAO extension for WebGL 1
+        var vaoExt = gl.getExtension('OES_vertex_array_object');
+        if (vaoExt) {
+            this.capabilities.vao = true;
+            this._createVAO = function() { return vaoExt.createVertexArrayOES(); };
+            this._bindVAO = function(vao) { vaoExt.bindVertexArrayOES(vao); };
+            this._deleteVAO = function(vao) { vaoExt.deleteVertexArrayOES(vao); };
+        }
+
+        // Try to get instanced arrays extension for WebGL 1
+        var instancedExt = gl.getExtension('ANGLE_instanced_arrays');
+        if (instancedExt) {
+            this.capabilities.instancedArrays = true;
+            this._drawArraysInstanced = function(mode, first, count, instanceCount) {
+                instancedExt.drawArraysInstancedANGLE(mode, first, count, instanceCount);
+            };
+            this._drawElementsInstanced = function(mode, count, type, offset, instanceCount) {
+                instancedExt.drawElementsInstancedANGLE(mode, count, type, offset, instanceCount);
+            };
+            this._vertexAttribDivisor = function(index, divisor) {
+                instancedExt.vertexAttribDivisorANGLE(index, divisor);
+            };
+        }
+
+        // Float textures extension
+        if (gl.getExtension('OES_texture_float')) {
+            this.capabilities.floatTextures = true;
+        }
+
+        // Depth texture extension
+        if (gl.getExtension('WEBGL_depth_texture')) {
+            this.capabilities.depthTextures = true;
+        }
+    }
+
+    // Anisotropic filtering (works in both WebGL 1 and 2)
+    var anisotropicExt = gl.getExtension('EXT_texture_filter_anisotropic') ||
+                         gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
+                         gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
+    if (anisotropicExt) {
+        this.capabilities.anisotropicFiltering = true;
+        this.capabilities.maxAnisotropy = gl.getParameter(anisotropicExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+    }
+
+    // VAO cache for geometries
+    this._vaoCache = {};
+};
+
+/**
+ * Gets the current WebGL capabilities.
+ *
+ * @method
+ *
+ * @return {Object} Object containing WebGL capabilities
+ */
+WebGLRenderer.prototype.getCapabilities = function getCapabilities() {
+    return this.capabilities;
 };
 
 /**

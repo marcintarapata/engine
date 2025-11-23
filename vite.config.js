@@ -17,7 +17,7 @@ export default defineConfig({
         '**/*.vs',
         '**/*.fs',
       ],
-      compress: false,
+      compress: true, // Enable shader compression in production
       watch: true,
     }),
   ],
@@ -41,18 +41,44 @@ export default defineConfig({
         drop_console: false,
         drop_debugger: true,
         pure_funcs: ['console.log'],
+        passes: 2, // Multiple compression passes for better results
+        ecma: 2020, // Use modern ECMAScript features
+        module: true,
+        toplevel: true,
+        unsafe_arrows: true,
+        unsafe_methods: true,
+      },
+      mangle: {
+        properties: false, // Don't mangle property names for API stability
       },
       format: {
         comments: false,
+        ecma: 2020,
       },
     },
     rollupOptions: {
       output: {
         exports: 'named',
+        // Preserve module structure for better tree-shaking
+        preserveModules: false,
+        // Chunk splitting configuration
+        manualChunks: undefined,
         // Provide global variables to use in the UMD build
         globals: {},
       },
+      // Tree-shaking optimizations
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false,
+      },
     },
+    // Target modern browsers for smaller bundle
+    target: 'es2020',
+    // Report compressed size
+    reportCompressedSize: true,
+    // Chunk size warning limit (in kB)
+    chunkSizeWarningLimit: 500,
   },
 
   // Vitest configuration
@@ -71,5 +97,17 @@ export default defineConfig({
 
   resolve: {
     extensions: ['.js', '.json'],
+  },
+
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['glslify'],
+    exclude: [],
+  },
+
+  // Enable esbuild for faster dev builds
+  esbuild: {
+    target: 'es2020',
+    keepNames: true,
   },
 });
