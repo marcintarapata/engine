@@ -3,6 +3,7 @@
   "version": "0.7.1",
   "description": "A powerful JavaScript rendering engine with 3D scene graph, DOM and WebGL rendering, physics, and animations",
   "main": "index.js",
+  "types": "types/index.d.ts",
   "exports": {
     ".": {
       "require": "./index.js",
