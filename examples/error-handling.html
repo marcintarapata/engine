@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Handling - Famous Engine</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      background: #1a1a2e;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .back-link {
+      color: #e94560;
+      text-decoration: none;
+      font-family: sans-serif;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    h1 {
+      color: #e94560;
+      font-family: sans-serif;
+      margin: 30px 0 20px;
+    }
+    h2 {
+      color: #ff6b6b;
+      font-family: sans-serif;
+      margin: 30px 0 15px;
+      font-size: 1.3rem;
+    }
+    p {
+      color: #a0a0a0;
+      font-family: sans-serif;
+      line-height: 1.6;
+    }
+    .demo-section {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid #0f3460;
+    }
+    .demo-section h3 {
+      color: #e94560;
+      font-family: sans-serif;
+      margin: 0 0 15px;
+      font-size: 1.1rem;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 5px;
+      font-size: 14px;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: sans-serif;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #ff6b6b;
+    }
+    .output {
+      background: #0f3460;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      color: #eaeaea;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .output .error {
+      color: #ff6b6b;
+    }
+    .output .info {
+      color: #00a8cc;
+    }
+    .output .success {
+      color: #4ade80;
+    }
+    code {
+      background: #0f3460;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+      color: #ff6b6b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back-link">Back to Examples</a>
+
+    <h1>Error Handling in Famous Engine</h1>
+
+    <p>
+      The Famous Engine provides a comprehensive error handling system with typed errors,
+      error codes, suggestions, and validation utilities.
+    </p>
+
+    <h2>Validation Utilities</h2>
+
+    <div class="demo-section">
+      <h3>requireParameter(value, name)</h3>
+      <p>Ensures a parameter is not null or undefined.</p>
+      <button onclick="demoRequireParameter(true)">Pass Valid</button>
+      <button onclick="demoRequireParameter(false)">Pass Null</button>
+      <div class="output" id="output-require-param"></div>
+    </div>
+
+    <div class="demo-section">
+      <h3>requireType(value, name, expectedType)</h3>
+      <p>Validates that a parameter is of the expected type.</p>
+      <button onclick="demoRequireType('string')">Pass String</button>
+      <button onclick="demoRequireType(123)">Pass Number</button>
+      <div class="output" id="output-require-type"></div>
+    </div>
+
+    <h2>Typed Errors</h2>
+
+    <div class="demo-section">
+      <h3>ParameterError</h3>
+      <p>Thrown when a parameter has an invalid value.</p>
+      <button onclick="demoParameterError()">Trigger Error</button>
+      <div class="output" id="output-param-error"></div>
+    </div>
+
+    <div class="demo-section">
+      <h3>InitializationError</h3>
+      <p>Thrown when engine initialization fails.</p>
+      <button onclick="demoInitError()">Trigger Error</button>
+      <div class="output" id="output-init-error"></div>
+    </div>
+
+    <div class="demo-section">
+      <h3>Catching FamousError</h3>
+      <p>All Famous errors inherit from <code>FamousError</code> for easy catching.</p>
+      <button onclick="demoCatchError()">Catch Error</button>
+      <div class="output" id="output-catch-error"></div>
+    </div>
+  </div>
+
+  <script src="../dist/famous.umd.js"></script>
+  <script>
+    // Get error utilities
+    var errors = famous.errors;
+    var FamousError = errors.FamousError;
+    var requireParameter = errors.requireParameter;
+    var requireType = errors.requireType;
+    var ParameterError = errors.ParameterError;
+    var InitializationError = errors.InitializationError;
+
+    function log(elementId, message, type) {
+      var output = document.getElementById(elementId);
+      var className = type || '';
+      output.innerHTML = '<span class="' + className + '">' + escapeHtml(message) + '</span>';
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Demo: requireParameter
+    window.demoRequireParameter = function(valid) {
+      try {
+        var value = valid ? 'my-value' : null;
+        requireParameter(value, 'myParam');
+        log('output-require-param', 'Success! Parameter validation passed.\nValue: "' + value + '"', 'success');
+      } catch (error) {
+        log('output-require-param',
+          'Error: ' + error.message + '\n' +
+          'Code: ' + error.code + '\n' +
+          'Suggestion: ' + error.suggestion,
+          'error'
+        );
+      }
+    };
+
+    // Demo: requireType
+    window.demoRequireType = function(value) {
+      try {
+        requireType(value, 'username', 'string');
+        log('output-require-type', 'Success! Type validation passed.\nValue: "' + value + '" (type: ' + typeof value + ')', 'success');
+      } catch (error) {
+        log('output-require-type',
+          'Error: ' + error.message + '\n' +
+          'Code: ' + error.code + '\n' +
+          'Expected: string\n' +
+          'Received: ' + typeof value,
+          'error'
+        );
+      }
+    };
+
+    // Demo: ParameterError
+    window.demoParameterError = function() {
+      try {
+        var opacity = 1.5; // Invalid - should be 0-1
+        if (opacity < 0 || opacity > 1) {
+          throw new ParameterError('opacity', 'number between 0 and 1', opacity);
+        }
+      } catch (error) {
+        log('output-param-error',
+          'Error: ' + error.message + '\n' +
+          'Code: ' + error.code + '\n' +
+          'Suggestion: ' + error.suggestion + '\n\n' +
+          'Full Error:\n' + error.toString(),
+          'error'
+        );
+      }
+    };
+
+    // Demo: InitializationError
+    window.demoInitError = function() {
+      try {
+        throw new InitializationError('Engine already initialized', {
+          suggestion: 'Use FamousEngine.getEngine() to get the existing instance',
+          context: { currentState: 'initialized', timestamp: Date.now() }
+        });
+      } catch (error) {
+        log('output-init-error',
+          'Error: ' + error.message + '\n' +
+          'Code: ' + error.code + '\n' +
+          'Suggestion: ' + error.suggestion + '\n' +
+          'Context: ' + JSON.stringify(error.context, null, 2),
+          'error'
+        );
+      }
+    };
+
+    // Demo: Catching FamousError
+    window.demoCatchError = function() {
+      try {
+        // Trigger an error
+        requireParameter(null, 'requiredValue');
+      } catch (error) {
+        if (error instanceof FamousError) {
+          log('output-catch-error',
+            'Caught a FamousError!\n\n' +
+            'Type: ' + error.constructor.name + '\n' +
+            'Message: ' + error.message + '\n' +
+            'Code: ' + error.code + '\n' +
+            'Suggestion: ' + error.suggestion + '\n\n' +
+            'instanceof FamousError: true\n' +
+            'instanceof Error: true',
+            'info'
+          );
+        } else {
+          log('output-catch-error', 'Caught non-Famous error: ' + error.message, 'error');
+        }
+      }
+    };
+
+    // Initialize outputs
+    document.querySelectorAll('.output').forEach(function(el) {
+      el.textContent = 'Click a button to see the result...';
+    });
+  </script>
+</body>
+</html>

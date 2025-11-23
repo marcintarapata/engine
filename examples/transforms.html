@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transforms - Famous Engine</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #1a1a2e;
+    }
+    #app {
+      width: 100%;
+      height: 100%;
+    }
+    .back-link {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: #e94560;
+      text-decoration: none;
+      font-family: sans-serif;
+      z-index: 1000;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Examples</a>
+  <div id="app"></div>
+
+  <script src="../dist/famous.umd.js"></script>
+  <script>
+    // Transforms Example
+    var FamousEngine = famous.core.FamousEngine;
+    var DOMElement = famous.domRenderables.DOMElement;
+
+    FamousEngine.init();
+    var scene = FamousEngine.createScene('#app');
+
+    // Title
+    var title = scene.addChild();
+    title.getComponent(0).setAlign(0.5, 0.08, 0);
+    title.getComponent(0).setMountPoint(0.5, 0.5, 0);
+    title.setSizeMode(1, 1, 1);
+    title.setAbsoluteSize(600, 50, 0);
+
+    new DOMElement(title, {
+      content: '3D Transforms',
+      properties: {
+        'color': '#e94560',
+        'font-family': 'sans-serif',
+        'font-size': '36px',
+        'font-weight': 'bold',
+        'text-align': 'center'
+      }
+    });
+
+    // Helper to create labeled boxes
+    function createBox(alignX, alignY, label, options) {
+      var node = scene.addChild();
+      var t = node.getComponent(0);
+
+      t.setAlign(alignX, alignY, 0);
+      t.setMountPoint(0.5, 0.5, 0);
+      t.setOrigin(0.5, 0.5, 0);
+
+      if (options.position) t.setPosition(options.position[0], options.position[1], options.position[2]);
+      if (options.rotation) t.setRotation(options.rotation[0], options.rotation[1], options.rotation[2]);
+      if (options.scale) t.setScale(options.scale[0], options.scale[1], options.scale[2]);
+      if (options.opacity !== undefined) node.setOpacity(options.opacity);
+
+      node.setSizeMode(1, 1, 1);
+      node.setAbsoluteSize(120, 120, 0);
+
+      new DOMElement(node, {
+        content: '<div style="font-weight:bold;margin-bottom:8px;">' + label + '</div><div style="font-size:11px;opacity:0.8;">' + options.desc + '</div>',
+        properties: {
+          'background': 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)',
+          'color': 'white',
+          'font-family': 'sans-serif',
+          'font-size': '14px',
+          'text-align': 'center',
+          'padding': '20px 10px',
+          'border-radius': '8px',
+          'border': '2px solid #e94560',
+          'box-sizing': 'border-box'
+        }
+      });
+
+      return node;
+    }
+
+    // Row 1: Position
+    createBox(0.15, 0.35, 'Default', { desc: 'No transform' });
+    createBox(0.35, 0.35, 'Position', { position: [20, 20, 0], desc: '+20px X, Y' });
+    createBox(0.55, 0.35, 'Position Z', { position: [0, 0, 50], desc: '+50px Z' });
+    createBox(0.75, 0.35, 'Position', { position: [-10, 30, 0], desc: '-10px X, +30px Y' });
+
+    // Row 2: Rotation
+    createBox(0.15, 0.6, 'Rotate X', { rotation: [0.3, 0, 0], desc: 'rotateX(17deg)' });
+    createBox(0.35, 0.6, 'Rotate Y', { rotation: [0, 0.3, 0], desc: 'rotateY(17deg)' });
+    createBox(0.55, 0.6, 'Rotate Z', { rotation: [0, 0, 0.3], desc: 'rotateZ(17deg)' });
+    createBox(0.75, 0.6, 'Rotate XYZ', { rotation: [0.2, 0.2, 0.2], desc: 'All axes' });
+
+    // Row 3: Scale & Opacity
+    createBox(0.15, 0.85, 'Scale Up', { scale: [1.3, 1.3, 1], desc: 'scale(1.3)' });
+    createBox(0.35, 0.85, 'Scale Down', { scale: [0.8, 0.8, 1], desc: 'scale(0.8)' });
+    createBox(0.55, 0.85, 'Scale XY', { scale: [1.4, 0.7, 1], desc: 'scaleX(1.4) scaleY(0.7)' });
+    createBox(0.75, 0.85, 'Opacity', { opacity: 0.5, desc: 'opacity: 0.5' });
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./types/index.d.ts"],
+  "out": "docs/api",
+  "name": "Famous Engine API",
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "includeVersion": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/Famous/engine",
+    "npm": "https://www.npmjs.com/package/famous"
+  },
+  "plugin": [],
+  "searchInComments": true,
+  "categorizeByGroup": true,
+  "defaultCategory": "Other",
+  "categoryOrder": [
+    "Core",
+    "Components",
+    "Physics",
+    "Math",
+    "Transitions",
+    "Rendering",
+    "Errors",
+    "Builders",
+    "*"
+  ],
+  "sort": ["source-order", "alphabetical"],
+  "visibilityFilters": {
+    "protected": true,
+    "private": false,
+    "inherited": true,
+    "external": false
+  }
+}

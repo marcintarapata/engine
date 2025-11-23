@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello World - Famous Engine</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #app {
+      width: 100%;
+      height: 100%;
+    }
+    .back-link {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: #e94560;
+      text-decoration: none;
+      font-family: sans-serif;
+      z-index: 1000;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Examples</a>
+  <div id="app"></div>
+
+  <script src="../dist/famous.umd.js"></script>
+  <script>
+    // Classic API - Hello World Example
+    var FamousEngine = famous.core.FamousEngine;
+    var DOMElement = famous.domRenderables.DOMElement;
+
+    // Initialize the engine
+    FamousEngine.init();
+
+    // Create a scene attached to #app
+    var scene = FamousEngine.createScene('#app');
+
+    // Add a child node to the scene
+    var node = scene.addChild();
+
+    // Get the node's transform component
+    var transform = node.getComponent(0);
+
+    // Center the node
+    transform.setAlign(0.5, 0.5, 0);
+    transform.setMountPoint(0.5, 0.5, 0);
+
+    // Set size
+    node.setSizeMode(1, 1, 1); // Absolute size mode
+    node.setAbsoluteSize(400, 200, 0);
+
+    // Create a DOMElement to render content
+    var element = new DOMElement(node, {
+      content: 'Hello Famous!',
+      properties: {
+        'background-color': '#16213e',
+        'color': '#e94560',
+        'font-family': '-apple-system, BlinkMacSystemFont, sans-serif',
+        'font-size': '48px',
+        'font-weight': 'bold',
+        'text-align': 'center',
+        'line-height': '200px',
+        'border-radius': '12px',
+        'box-shadow': '0 10px 40px rgba(0,0,0,0.3)'
+      }
+    });
+  </script>
+</body>
+</html>

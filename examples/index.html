@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Famous Engine - Examples</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #1a1a2e;
+      color: #eaeaea;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 2rem;
+      background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+      text-align: center;
+      border-bottom: 1px solid #0f3460;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header p {
+      color: #a0a0a0;
+      font-size: 1.1rem;
+    }
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .example-card {
+      background: #16213e;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #0f3460;
+    }
+    .example-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(233, 69, 96, 0.2);
+    }
+    .example-card a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .example-preview {
+      height: 180px;
+      background: #0f3460;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    .example-info {
+      padding: 1.5rem;
+    }
+    .example-info h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      color: #e94560;
+    }
+    .example-info p {
+      color: #a0a0a0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .tag {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: #0f3460;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      margin-top: 1rem;
+      color: #e94560;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Famous Engine Examples</h1>
+    <p>Interactive examples demonstrating the Famous Engine API</p>
+  </div>
+
+  <div class="examples-grid">
+    <div class="example-card">
+      <a href="hello-world.html">
+        <div class="example-preview">
+          <span>Hello</span>
+        </div>
+        <div class="example-info">
+          <h3>Hello World</h3>
+          <p>Basic example showing how to initialize the engine and render a simple DOM element.</p>
+          <span class="tag">Beginner</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="example-card">
+      <a href="builder-pattern.html">
+        <div class="example-preview">
+          <span>Builder</span>
+        </div>
+        <div class="example-info">
+          <h3>Builder Pattern</h3>
+          <p>Using the modern builder API for fluent, chainable configuration.</p>
+          <span class="tag">Modern API</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="example-card">
+      <a href="transforms.html">
+        <div class="example-preview">
+          <span>3D</span>
+        </div>
+        <div class="example-info">
+          <h3>Transforms</h3>
+          <p>Position, rotation, scale, and other transform properties.</p>
+          <span class="tag">Core</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="example-card">
+      <a href="animation.html">
+        <div class="example-preview">
+          <span>Motion</span>
+        </div>
+        <div class="example-info">
+          <h3>Animation</h3>
+          <p>Smooth transitions and animations using Transitionable.</p>
+          <span class="tag">Animation</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="example-card">
+      <a href="physics.html">
+        <div class="example-preview">
+          <span>Physics</span>
+        </div>
+        <div class="example-info">
+          <h3>Physics Engine</h3>
+          <p>Particles, forces, springs, and physics simulation.</p>
+          <span class="tag">Physics</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="example-card">
+      <a href="error-handling.html">
+        <div class="example-preview">
+          <span>Errors</span>
+        </div>
+        <div class="example-info">
+          <h3>Error Handling</h3>
+          <p>Using typed errors and validation utilities.</p>
+          <span class="tag">Modern API</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
